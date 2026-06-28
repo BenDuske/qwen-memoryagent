@@ -60,6 +60,34 @@ structurally instead of hoped-for.
 recency weight every two weeks. Similarity dominates (0.65) so an old-but-relevant fact still
 beats a fresh-but-irrelevant one; recency is a tie-breaker, not the ranking.
 
+## Does the salience budget actually beat recency? I measured it
+
+A design argument is cheap. So I wrote `eval.py` to put a number on the central claim, instead
+of just asserting it. The setup is deliberately adversarial to the salience approach: plant **one
+relevant memory aged 25 days** in a flood of **12 recent-but-irrelevant distractors**, then recall
+under a tight budget (80 tokens, top_k 6) two ways — a naive most-recent-first baseline, and the
+real `MemoryStore.recall`. Same budget, eight probe queries:
+
+```
+probe query                                        naive  salience
+------------------------------------------------------------------
+what antibiotic is safe for my daughter             miss       HIT
+which port / PostgreSQL version is production        miss       HIT
+how does the user like their coffee                  miss       HIT
+when is the wife's birthday                           miss       HIT
+...
+------------------------------------------------------------------
+recall hit-rate                                  0/8     8/8
+```
+
+**Naive recency: 0/8. Salience budget: 8/8.** Under the *same* token budget, recency-only
+truncation drops the one memory that mattered in all eight scenarios; the salience budget keeps
+it every time. That gap is the whole point of the project — it's the difference between "we store
+everything" and "we recall the right thing within the window." The eval is keyless and
+deterministic (same hashing-embedding seam the tests use, so cosine similarity is real), and it
+auto-upgrades to real Qwen embeddings when a key is present. It exits non-zero if salience ever
+fails to beat naive, so it doubles as a regression gate, not just a blog screenshot.
+
 ## Forgetting was the hard part — and the interesting one
 
 It's easy to *add* memory. Deciding what to drop is where most systems cheat (they never drop,
