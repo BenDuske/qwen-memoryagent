@@ -1,6 +1,5 @@
 # Aegis MemoryAgent — Qwen Cloud Hackathon (Track 1: MemoryAgent)
 
-[![CI](https://github.com/BenDuske/qwen-memoryagent/actions/workflows/ci.yml/badge.svg)](https://github.com/BenDuske/qwen-memoryagent/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9–3.12](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue.svg)](pyproject.toml)
 
@@ -77,8 +76,12 @@ so cosine similarity is real and recall ranking is verifiable).
 
 ```
 pip install -e ".[dev]"   # or: pip install pytest
-pytest                    # 18 tests, ~1s, no key required (install ".[service]" to include the HTTP tests)
+pytest                    # 26 tests, ~1s, no key required (install ".[service]" to include the HTTP tests)
 ```
+
+> **CI:** a ready GitHub Actions workflow is parked at [`docs/ci-workflow.yml.txt`](docs/ci-workflow.yml.txt).
+> Copy it to `.github/workflows/ci.yml` (requires a token with the `workflow` scope) to run the
+> keyless suite on every push/PR across Python 3.9–3.12.
 
 ## Does the salience budget actually work? (evaluation)
 
