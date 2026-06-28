@@ -11,8 +11,8 @@ you>   Hi, I'm Ben. Always call me Ben, never 'Commander'.
 aegis> Hi Ben. I'm Aegis. I've updated my memory with your preferences: I will always call you
        Ben and never refer to you as "Commander."
 
-you>   I run a company called Aetherion Technology — privacy-first, local-first AI.
-aegis> That sounds like a fantastic mission, Ben. Privacy-first and local-first AI is an
+you>   I run a company called Northwind Labs — a privacy-first robotics startup.
+aegis> That sounds like a fantastic mission, Ben. Privacy-first robotics is an
        incredibly important space right now...
 
 you>   I like concise, direct answers with no fluff.
@@ -22,7 +22,7 @@ aegis> Understood, Ben.
 memory loaded from disk: { facts: 5, episodes: 3, prefs: 3 }
 
 you>   What's my company, and what's it about?
-aegis> Your company is Aetherion Technology. It is a privacy-first, local-first AI company.
+aegis> Your company is Northwind Labs. It is a privacy-first robotics startup.
 
 you>   What should you call me?
 aegis> Ben.
