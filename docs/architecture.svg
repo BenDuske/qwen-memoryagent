@@ -50,7 +50,7 @@
   <rect class="box" x="244" y="282" width="382" height="56" rx="9" fill="#f5f3ff" stroke="#c4b5fd"/>
   <text x="258" y="306" class="stepn">3</text>
   <text x="278" y="304" class="step">Qwen Cloud chat &#8594; reply</text>
-  <text x="278" y="324" class="small">DashScope OpenAI-compatible (qwen-plus / qwen-max)</text>
+  <text x="278" y="324" class="small">DashScope OpenAI-compatible (qwen3.7-plus / qwen-max)</text>
 
   <!-- Step 4 extract -->
   <rect class="box" x="244" y="348" width="382" height="56" rx="9" fill="#f5f3ff" stroke="#c4b5fd"/>
@@ -80,8 +80,8 @@
   <rect class="box" x="708" y="250" width="232" height="120" rx="12" fill="#f5f3ff" stroke="#a78bfa"/>
   <text x="824" y="280" text-anchor="middle" class="lbl">Qwen Cloud &#183; DashScope</text>
   <text x="824" y="304" text-anchor="middle" class="small">OpenAI-compatible endpoint</text>
-  <text x="824" y="326" text-anchor="middle" class="mono">chat: qwen-plus / qwen-max</text>
-  <text x="824" y="346" text-anchor="middle" class="mono">embed: text-embedding-v3</text>
+  <text x="824" y="326" text-anchor="middle" class="mono">chat: qwen3.7-plus / qwen-max</text>
+  <text x="824" y="346" text-anchor="middle" class="mono">embed: text-embedding-v4</text>
   <text x="824" y="364" text-anchor="middle" class="tag">runs on Alibaba Cloud (see DEPLOY.md)</text>
 
   <!-- agent <-> qwen (chat) -->

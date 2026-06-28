@@ -38,11 +38,11 @@ Qwen → **extract** new facts/prefs/episodes → **forget** low-salience, stale
 user ──▶ MemoryAgent
             │  1. recall(query, budget)  ── semantic + recency over episodic/facts (+ all prefs)
             │  2. build bounded prompt    ── persona + prefs + recalled facts + recent episodes
-            │  3. Qwen Cloud chat         ── DashScope OpenAI-compatible (qwen-plus/qwen-max)
+            │  3. Qwen Cloud chat         ── DashScope OpenAI-compatible (qwen3.7-plus)
             │  4. extract memories        ── facts / prefs / episode from the exchange
             │  5. consolidate + forget    ── decay, prune, compact
             ▼
-        memory store (JSONL + vector index)  ── embeddings via Qwen text-embedding-v3
+        memory store (JSONL + vector index)  ── embeddings via Qwen text-embedding-v4
 ```
 
 ## Run

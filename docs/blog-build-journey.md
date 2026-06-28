@@ -102,8 +102,8 @@ memory logic changes* — only the two leaf functions start hitting the network.
 
 The backend is 100% Qwen Cloud via DashScope's OpenAI-compatible endpoint:
 
-- **Chat:** `qwen-plus` (swappable to `qwen-max`)
-- **Embeddings:** `text-embedding-v3`
+- **Chat:** `qwen3.7-plus` (swappable to `qwen-max`)
+- **Embeddings:** `text-embedding-v4`
 - **Base URL:** `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`
 
 Because it speaks the OpenAI-compatible protocol, the client is tiny — and the same engine ships
