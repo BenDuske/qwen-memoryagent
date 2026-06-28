@@ -3,8 +3,8 @@ import os
 
 QWEN_BASE_URL = os.environ.get("QWEN_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
 QWEN_API_KEY  = os.environ.get("QWEN_API_KEY") or os.environ.get("DASHSCOPE_API_KEY", "")
-CHAT_MODEL    = os.environ.get("QWEN_CHAT_MODEL", "qwen-plus")
-EMBED_MODEL   = os.environ.get("QWEN_EMBED_MODEL", "text-embedding-v3")
+CHAT_MODEL    = os.environ.get("QWEN_CHAT_MODEL", "qwen3.7-plus")
+EMBED_MODEL   = os.environ.get("QWEN_EMBED_MODEL", "text-embedding-v4")
 
 MEMORY_DIR    = os.environ.get("MEMORY_DIR", os.path.expanduser("~/.aegis-memoryagent"))
 
