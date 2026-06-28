@@ -100,6 +100,6 @@ docs/architecture.svg   system diagram (for the submission)
 - [x] Proof of Alibaba Cloud deployment (`DEPLOY.md` + Dockerfile + FastAPI `app.py`)
 - [x] Architecture diagram (`docs/architecture.svg`)
 - [ ] < 3-min demo video (script in `docs/demo-script.md`)
-- [ ] (bonus) build-journey blog post
+- [x] (bonus) build-journey blog post draft (`docs/blog-build-journey.md`)
 
 License: MIT (see `LICENSE`). Copyright © 2026 Digital Real-Estate Frontier, LLC.
