@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="660" viewBox="0 0 980 660" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrowQ" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#7c3aed"/>
+    </marker>
+    <style>
+      .title { font-size: 22px; font-weight: 700; fill: #0f172a; }
+      .sub   { font-size: 13px; fill: #64748b; }
+      .box   { fill: #ffffff; stroke: #cbd5e1; stroke-width: 1.5; }
+      .lbl   { font-size: 14px; font-weight: 600; fill: #0f172a; }
+      .small { font-size: 11.5px; fill: #475569; }
+      .step  { font-size: 12.5px; fill: #1e293b; }
+      .stepn { font-size: 12.5px; font-weight: 700; fill: #2563eb; }
+      .mono  { font-family: 'Consolas','SF Mono',monospace; font-size: 11px; fill: #334155; }
+      .edge  { stroke: #475569; stroke-width: 1.6; fill: none; }
+      .edgeQ { stroke: #7c3aed; stroke-width: 1.6; fill: none; stroke-dasharray: 5 3; }
+      .tag   { font-size: 10.5px; fill: #64748b; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="660" fill="#f8fafc"/>
+  <text x="36" y="44" class="title">Aegis MemoryAgent — Qwen Cloud (Track 1)</text>
+  <text x="36" y="66" class="sub">Persistent, evolving memory with bounded recall: retrieve within a token budget &#8594; answer &#8594; learn &#8594; forget.</text>
+
+  <!-- User -->
+  <rect class="box" x="36" y="120" width="120" height="64" rx="10" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="96" y="150" text-anchor="middle" class="lbl">User</text>
+  <text x="96" y="170" text-anchor="middle" class="small">a turn</text>
+
+  <!-- Agent loop container -->
+  <rect class="box" x="220" y="100" width="430" height="430" rx="14" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="240" y="128" class="lbl">MemoryAgent &#183; turn loop</text>
+
+  <!-- Step 1 recall -->
+  <rect class="box" x="244" y="146" width="382" height="60" rx="9" fill="#f1f5f9"/>
+  <text x="258" y="172" class="stepn">1</text>
+  <text x="278" y="170" class="step">recall(query, token_budget)</text>
+  <text x="278" y="190" class="small">rank facts + episodes by salience, pack until budget hit; prefs always injected</text>
+
+  <!-- Step 2 build prompt -->
+  <rect class="box" x="244" y="216" width="382" height="56" rx="9" fill="#f1f5f9"/>
+  <text x="258" y="240" class="stepn">2</text>
+  <text x="278" y="238" class="step">build bounded prompt</text>
+  <text x="278" y="258" class="small">persona + preferences + recalled facts + recent episodes</text>
+
+  <!-- Step 3 qwen chat -->
+  <rect class="box" x="244" y="282" width="382" height="56" rx="9" fill="#f5f3ff" stroke="#c4b5fd"/>
+  <text x="258" y="306" class="stepn">3</text>
+  <text x="278" y="304" class="step">Qwen Cloud chat &#8594; reply</text>
+  <text x="278" y="324" class="small">DashScope OpenAI-compatible (qwen-plus / qwen-max)</text>
+
+  <!-- Step 4 extract -->
+  <rect class="box" x="244" y="348" width="382" height="56" rx="9" fill="#f5f3ff" stroke="#c4b5fd"/>
+  <text x="258" y="372" class="stepn">4</text>
+  <text x="278" y="370" class="step">extract memory (JSON)</text>
+  <text x="278" y="390" class="small">new facts / preferences / one-line episode from the exchange</text>
+
+  <!-- Step 5 consolidate/forget -->
+  <rect class="box" x="244" y="414" width="382" height="56" rx="9" fill="#fef2f2" stroke="#fca5a5"/>
+  <text x="258" y="438" class="stepn">5</text>
+  <text x="278" y="436" class="step">consolidate + forget</text>
+  <text x="278" y="456" class="small">episodic decays; below salience floor &#8594; pruned. prefs last-write-wins</text>
+
+  <!-- vertical flow arrows inside loop -->
+  <line class="edge" x1="435" y1="206" x2="435" y2="214" marker-end="url(#arrow)"/>
+  <line class="edge" x1="435" y1="272" x2="435" y2="280" marker-end="url(#arrow)"/>
+  <line class="edge" x1="435" y1="338" x2="435" y2="346" marker-end="url(#arrow)"/>
+  <line class="edge" x1="435" y1="404" x2="435" y2="412" marker-end="url(#arrow)"/>
+
+  <!-- user -> agent -->
+  <path class="edge" d="M156,152 L244,168" marker-end="url(#arrow)"/>
+  <!-- reply back to user -->
+  <path class="edge" d="M244,310 C200,310 96,300 96,184" marker-end="url(#arrow)"/>
+  <text x="120" y="250" class="tag">reply</text>
+
+  <!-- Qwen Cloud -->
+  <rect class="box" x="708" y="250" width="232" height="120" rx="12" fill="#f5f3ff" stroke="#a78bfa"/>
+  <text x="824" y="280" text-anchor="middle" class="lbl">Qwen Cloud &#183; DashScope</text>
+  <text x="824" y="304" text-anchor="middle" class="small">OpenAI-compatible endpoint</text>
+  <text x="824" y="326" text-anchor="middle" class="mono">chat: qwen-plus / qwen-max</text>
+  <text x="824" y="346" text-anchor="middle" class="mono">embed: text-embedding-v3</text>
+  <text x="824" y="364" text-anchor="middle" class="tag">runs on Alibaba Cloud (see DEPLOY.md)</text>
+
+  <!-- agent <-> qwen (chat) -->
+  <path class="edgeQ" d="M626,310 L708,310" marker-end="url(#arrowQ)"/>
+  <!-- agent <-> qwen (embed for recall + writes) -->
+  <path class="edgeQ" d="M626,176 C680,176 824,200 824,248" marker-end="url(#arrowQ)"/>
+  <text x="700" y="200" class="tag" fill="#7c3aed">embed</text>
+
+  <!-- Memory store -->
+  <rect class="box" x="708" y="408" width="232" height="200" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="824" y="436" text-anchor="middle" class="lbl">Memory store</text>
+  <text x="824" y="454" text-anchor="middle" class="tag">plain JSONL / JSON under MEMORY_DIR</text>
+
+  <rect class="box" x="724" y="466" width="200" height="40" rx="8" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="736" y="484" class="small" font-weight="700" fill="#1e293b">Episodic</text>
+  <text x="736" y="499" class="small">timestamped summaries &#183; decays</text>
+
+  <rect class="box" x="724" y="512" width="200" height="40" rx="8" fill="#ecfdf5" stroke="#a7f3d0"/>
+  <text x="736" y="530" class="small" font-weight="700" fill="#1e293b">Facts</text>
+  <text x="736" y="545" class="small">durable knowledge &#183; semantic top-k</text>
+
+  <rect class="box" x="724" y="558" width="200" height="40" rx="8" fill="#fffbeb" stroke="#fde68a"/>
+  <text x="736" y="576" class="small" font-weight="700" fill="#1e293b">Preferences</text>
+  <text x="736" y="591" class="small">last-write-wins &#183; always injected</text>
+
+  <!-- recall reads from store -->
+  <path class="edge" d="M626,176 C660,176 708,420 708,470" marker-end="url(#arrow)"/>
+  <text x="648" y="430" class="tag">recall</text>
+  <!-- writes to store -->
+  <path class="edge" d="M626,442 C660,470 690,510 706,520" marker-end="url(#arrow)"/>
+  <text x="650" y="500" class="tag">write / prune</text>
+
+  <!-- Bottom: the three hard things -->
+  <rect class="box" x="36" y="556" width="630" height="74" rx="10" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="50" y="578" class="lbl" font-size="13">What makes it a MemoryAgent</text>
+  <text x="50" y="599" class="mono">salience = 0.65&#183;cos_sim + 0.20&#183;recency_decay + 0.15&#183;importance</text>
+  <text x="50" y="618" class="small">Bounded recall: pack highest-salience memories until RECALL_TOKEN_BUDGET &#8594; prompt never overflows the window.</text>
+
+  <text x="824" y="632" text-anchor="middle" class="tag">© 2026 Digital Real-Estate Frontier, LLC &#183; MIT</text>
+</svg>
