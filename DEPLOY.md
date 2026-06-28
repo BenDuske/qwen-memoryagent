@@ -18,8 +18,8 @@ Get an API key from Alibaba Cloud **Model Studio** (DashScope). The agent reads:
 |-----|---------|-------|
 | `QWEN_API_KEY` / `DASHSCOPE_API_KEY` | — | **required** |
 | `QWEN_BASE_URL` | `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` | use the CN endpoint inside mainland regions |
-| `QWEN_CHAT_MODEL` | `qwen-plus` | `qwen-max` / `qwen-turbo` |
-| `QWEN_EMBED_MODEL` | `text-embedding-v3` | |
+| `QWEN_CHAT_MODEL` | `qwen3.7-plus` | `qwen-max` / `qwen-turbo` |
+| `QWEN_EMBED_MODEL` | `text-embedding-v4` | |
 | `MEMORY_DIR` | `~/.aegis-memoryagent` | **mount this on a persistent volume** |
 | `RECALL_TOKEN_BUDGET` | `1200` | bounded-recall ceiling |
 | `DECAY_HALFLIFE_DAYS` / `SALIENCE_FLOOR` | `14` / `0.12` | forgetting tunables |
@@ -45,7 +45,7 @@ Health check:
 
 ```bash
 curl localhost:8000/healthz
-# {"ok": true, "memory_dir": "/data/memory", "chat_model": "qwen-plus"}
+# {"ok": true, "memory_dir": "/data/memory", "chat_model": "qwen3.7-plus"}
 ```
 
 Push to **Alibaba Cloud Container Registry (ACR)**:

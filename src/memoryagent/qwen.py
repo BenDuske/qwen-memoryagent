@@ -1,7 +1,7 @@
 """Qwen Cloud client — chat + embeddings over DashScope's OpenAI-compatible endpoint.
 
 Stdlib only (urllib) so the agent has zero third-party runtime deps. Both calls hit
-Alibaba Cloud Model Studio; swap models via env (qwen-plus / qwen-max / qwen-turbo).
+Alibaba Cloud Model Studio; swap models via env (qwen3.7-plus / qwen-max / qwen-turbo).
 """
 import json
 import urllib.request
