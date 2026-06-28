@@ -1,5 +1,9 @@
 # Aegis MemoryAgent — Qwen Cloud Hackathon (Track 1: MemoryAgent)
 
+[![CI](https://github.com/BenDuske/qwen-memoryagent/actions/workflows/ci.yml/badge.svg)](https://github.com/BenDuske/qwen-memoryagent/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.9–3.12](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue.svg)](pyproject.toml)
+
 An AI agent with **persistent, evolving memory** built on **Qwen Cloud**. It accumulates
 experience across sessions, learns the user's preferences and facts, **forgets** what goes
 stale, and **recalls only the most salient memories within a bounded context window** — the
