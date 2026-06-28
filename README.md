@@ -56,6 +56,19 @@ python -m memoryagent.cli     # interactive; memory persists across runs (prove 
 Backend is **100% Qwen Cloud**: chat + embeddings both call DashScope's OpenAI-compatible
 endpoint. See `DEPLOY.md` for the Alibaba Cloud (Function Compute / ECS) deployment proof.
 
+## Testing
+
+The full memory engine — bounded recall, decay-based forgetting, cross-session
+persistence, last-write-wins preferences — is covered by tests that run **without
+a Qwen Cloud key**. The two network functions (`qwen.embed`, `qwen.chat`) are
+monkeypatched with deterministic fakes (a stable hashing bag-of-words embedding,
+so cosine similarity is real and recall ranking is verifiable).
+
+```
+pip install -e ".[dev]"   # or: pip install pytest
+pytest                    # 12 tests, ~1s, no key required
+```
+
 ## Repo layout
 
 ```
@@ -65,6 +78,8 @@ src/memoryagent/
   memory.py     the 3-layer store: recall / extract / forget  ← the heart
   agent.py      the turn loop
   cli.py        cross-session REPL demo
+tests/          pytest suite — runs without a key (fakes the network calls)
+pyproject.toml  packaging + pytest config
 Dockerfile      Alibaba Cloud deployable
 DEPLOY.md       Alibaba Cloud deployment proof
 docs/architecture.svg   system diagram (for the submission)
@@ -73,6 +88,7 @@ docs/architecture.svg   system diagram (for the submission)
 ## Hackathon checklist
 - [x] Built on Qwen models via Qwen Cloud
 - [x] Open-source repo + license (MIT)
+- [x] Tests for recall / forget / bounded budget (run keyless via monkeypatch)
 - [ ] Proof of Alibaba Cloud deployment (`DEPLOY.md` + Dockerfile)
 - [ ] Architecture diagram (`docs/architecture.svg`)
 - [ ] < 3-min demo video (script in `docs/demo-script.md`)
