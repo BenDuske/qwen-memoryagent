@@ -26,6 +26,10 @@ import re
 import sys
 import tempfile
 
+# Make `src/` importable so `python eval.py` works from a fresh checkout
+# (mirrors demo.py). Without this, the documented keyless reproduce step fails.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
+
 from memoryagent import config, qwen
 from memoryagent.memory import MemoryStore, _approx_tokens
 
