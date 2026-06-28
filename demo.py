@@ -22,7 +22,7 @@ try:
     a1 = MemoryAgent(MemoryStore(root))
     for u in [
         "Hi, I'm Ben. Always call me Ben, never 'Commander'.",
-        "I run a company called Aetherion Technology — privacy-first, local-first AI.",
+        "I run a company called Northwind Labs — a privacy-first robotics startup.",
         "I like concise, direct answers with no fluff.",
     ]:
         print("you>  ", u)
