@@ -1,3 +1,4 @@
+# Aegis MemoryAgent — © 2026 Ben Duske. Licensed under the MIT License (see LICENSE).
 """Configuration — all via env (see .env.example)."""
 import os
 

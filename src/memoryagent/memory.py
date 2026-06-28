@@ -1,3 +1,4 @@
+# Aegis MemoryAgent — © 2026 Ben Duske. Licensed under the MIT License (see LICENSE).
 """The 3-layer memory store — the heart of the MemoryAgent.
 
   Episodic   timestamped interaction summaries     (decays, can be pruned/compacted)

@@ -1,3 +1,4 @@
+# Aegis MemoryAgent — © 2026 Ben Duske. Licensed under the MIT License (see LICENSE).
 """The turn loop: screen -> recall -> answer (Qwen Cloud) -> extract new memory -> forget."""
 import json
 from . import config, qwen, policy
