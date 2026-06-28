@@ -1,0 +1,4 @@
+# Core runtime: Python 3.9+ standard library only (urllib for the Qwen Cloud calls),
+# so the agent stays dependency-light and trivially deployable on Alibaba Cloud.
+# Optional dev extras:
+#   pytest        # tests
