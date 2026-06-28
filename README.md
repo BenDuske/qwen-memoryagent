@@ -76,6 +76,35 @@ pip install -e ".[dev]"   # or: pip install pytest
 pytest                    # 18 tests, ~1s, no key required (install ".[service]" to include the HTTP tests)
 ```
 
+## Does the salience budget actually work? (evaluation)
+
+`eval.py` *measures* Track 1's core claim instead of asserting it. It plants one
+relevant-but-old memory in a flood of recent-but-irrelevant chatter, then recalls under a
+**tight token budget** two ways: naive (most-recent-first) vs. the real `MemoryStore.recall`
+(similarity × recency × importance). Runs keyless and deterministic; uses real Qwen
+embeddings automatically when a key is present.
+
+```
+python eval.py
+```
+
+```
+budget=80 tokens, top_k=6, 12 recent distractors, 1 relevant memory aged 25d
+
+probe query                              naive   salience
+what antibiotic is safe for my daughter   miss      HIT
+which port is the production database on   miss      HIT
+... (8 scenarios)
+recall hit-rate                           0/8       8/8
+
+naive recency:      0%  (drops the old-but-relevant memory)
+salience budget:  100%  (keeps it within the same token budget)
+VERDICT: PASS -- salience budget beats naive recency under budget.
+```
+
+Same budget, opposite outcome: recency-only truncation loses the one memory that mattered;
+the salience budget keeps it. That gap *is* the MemoryAgent.
+
 ## Repo layout
 
 ```
@@ -86,6 +115,7 @@ src/memoryagent/
   agent.py      the turn loop
   cli.py        cross-session REPL demo
   app.py        FastAPI service variant (same engine, HTTP API)  ← deployable
+eval.py         measures salience-budget recall vs naive recency (keyless)
 tests/          pytest suite — runs without a key (fakes the network calls)
 pyproject.toml  packaging + pytest config
 Dockerfile      Alibaba Cloud deployable
