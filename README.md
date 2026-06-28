@@ -98,7 +98,7 @@ docs/architecture.svg   system diagram (for the submission)
 - [x] Open-source repo + license (MIT)
 - [x] Tests for recall / forget / bounded budget (run keyless via monkeypatch)
 - [x] Proof of Alibaba Cloud deployment (`DEPLOY.md` + Dockerfile + FastAPI `app.py`)
-- [ ] Architecture diagram (`docs/architecture.svg`)
+- [x] Architecture diagram (`docs/architecture.svg`)
 - [ ] < 3-min demo video (script in `docs/demo-script.md`)
 - [ ] (bonus) build-journey blog post
 
