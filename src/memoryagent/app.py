@@ -1,3 +1,4 @@
+# Aegis MemoryAgent — © 2026 Ben Duske. Licensed under the MIT License (see LICENSE).
 """FastAPI service variant — the same MemoryAgent behind an HTTP API.
 
 This is the deployable face of the agent (Alibaba Cloud Function Compute / ECS /

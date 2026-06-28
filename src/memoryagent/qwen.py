@@ -1,3 +1,4 @@
+# Aegis MemoryAgent — © 2026 Ben Duske. Licensed under the MIT License (see LICENSE).
 """Qwen Cloud client — chat + embeddings over DashScope's OpenAI-compatible endpoint.
 
 Stdlib only (urllib) so the agent has zero third-party runtime deps. Both calls hit

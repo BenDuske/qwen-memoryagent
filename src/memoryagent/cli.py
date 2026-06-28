@@ -1,3 +1,4 @@
+# Aegis MemoryAgent — © 2026 Ben Duske. Licensed under the MIT License (see LICENSE).
 """Interactive demo. Memory persists across runs — quit, restart, and it still knows you.
 That cross-session recall (without replaying history) is the Track-1 point.
 """
