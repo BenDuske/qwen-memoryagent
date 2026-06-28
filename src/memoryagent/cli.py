@@ -2,9 +2,12 @@
 That cross-session recall (without replaying history) is the Track-1 point.
 """
 from .agent import MemoryAgent
+from . import policy
 
 
 def main():
+    if not policy.ensure_consent():
+        return
     agent = MemoryAgent()
     s = agent.mem.stats()
     print("Aegis MemoryAgent — Qwen Cloud (Track 1). Memory persists across sessions.")

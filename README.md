@@ -10,7 +10,7 @@ stale, and **recalls only the most salient memories within a bounded context win
 exact brief of Track 1.
 
 > Submission to the *Global AI Hackathon Series with Qwen Cloud*. Backend runs on Alibaba Cloud
-> (Model Studio / DashScope, OpenAI-compatible Qwen endpoints). © Digital Real-Estate Frontier, LLC.
+> (Model Studio / DashScope, OpenAI-compatible Qwen endpoints). © Ben Duske.
 
 ## Why this is a MemoryAgent (not a chatbot with a log)
 
@@ -109,6 +109,28 @@ VERDICT: PASS -- salience budget beats naive recency under budget.
 Same budget, opposite outcome: recency-only truncation loses the one memory that mattered;
 the salience budget keeps it. That gap *is* the MemoryAgent.
 
+## Safety, privacy & legal
+
+This is a public release, so it ships with a real policy layer — not just a disclaimer:
+
+- **Baseline safety policy** (`memoryagent.policy`) is prepended to every system prompt and
+  cannot be disabled: lawful use only (U.S. federal + your state/local law), no sexual/explicit
+  content, **zero tolerance** for sexualizing minors (hard-blocked at the input screen).
+- **Consent gate** — the CLI requires you to type `AGREE` to the License/Terms/AUP/Privacy/
+  Disclaimer before first use (recorded locally with a version + timestamp). See
+  [`CONSENT.md`](CONSENT.md). Set `AEGIS_ASSUME_CONSENT=1` for headless/CI.
+- **Ethics onboarding** — a business can layer its own mission, voice, and boundaries on top of
+  the baseline via `ethics.yaml` ([`docs/ETHICS_ONBOARDING.md`](docs/ETHICS_ONBOARDING.md));
+  config can only tighten the baseline, never loosen it.
+- **AI-output disclaimer** — output may be wrong and is **not professional advice**; a human
+  reviews consequential decisions. [`docs/legal/DISCLAIMER.md`](docs/legal/DISCLAIMER.md).
+- **Local-first privacy** — the author runs no servers and collects nothing; your memory is
+  local files. [`docs/legal/PRIVACY_POLICY.md`](docs/legal/PRIVACY_POLICY.md).
+- Full policy set: [`docs/legal/`](docs/legal/) · vulnerabilities: [`SECURITY.md`](SECURITY.md)
+  · conduct: [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Bug reports use the issue templates.
+
+> Legal docs are **DRAFT — pending attorney review**; they are templates, not legal advice.
+
 ## Repo layout
 
 ```
@@ -136,4 +158,4 @@ docs/architecture.svg   system diagram (for the submission)
 - [ ] < 3-min demo video (script in `docs/demo-script.md`)
 - [x] (bonus) build-journey blog post draft (`docs/blog-build-journey.md`)
 
-License: MIT (see `LICENSE`). Copyright © 2026 Digital Real-Estate Frontier, LLC.
+License: MIT (see `LICENSE`). Copyright © 2026 Ben Duske.

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "🔒 Report a security vulnerability (private)"
+    url: https://github.com/BenDuske/qwen-memoryagent/security/advisories/new
+    about: "Do not file security issues publicly. Use a private security advisory."
+  - name: "📜 Acceptable Use & Legal"
+    url: https://github.com/BenDuske/qwen-memoryagent/blob/master/docs/legal/README.md
+    about: "Acceptable Use Policy, Privacy, Terms, and the AI-output Disclaimer."

@@ -1,6 +1,6 @@
-"""The turn loop: recall -> answer (Qwen Cloud) -> extract new memory -> forget."""
+"""The turn loop: screen -> recall -> answer (Qwen Cloud) -> extract new memory -> forget."""
 import json
-from . import config, qwen
+from . import config, qwen, policy
 from .memory import MemoryStore
 
 _EXTRACT_SYS = (
@@ -17,7 +17,8 @@ class MemoryAgent:
         self.mem = store or MemoryStore()
 
     def _build_system(self, picked, prefs) -> str:
-        parts = [config.PERSONA]
+        # Safety policy first (non-negotiable), then optional org ethics, then persona.
+        parts = [policy.system_preamble()]
         if prefs:
             parts.append("Known preferences: " +
                          "; ".join(f"{k}={v['value']}" for k, v in prefs.items()))
@@ -27,6 +28,9 @@ class MemoryAgent:
         return "\n\n".join(parts)
 
     def chat(self, user_text: str) -> str:
+        allowed, _cat, refusal = policy.screen(user_text)
+        if not allowed:
+            return refusal
         picked, prefs = self.mem.recall(user_text)
         system = self._build_system(picked, prefs)
         reply = qwen.chat([
