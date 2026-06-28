@@ -53,6 +53,13 @@ pip install -r requirements.txt
 python -m memoryagent.cli     # interactive; memory persists across runs (prove cross-session recall)
 ```
 
+Or run it as an HTTP service (the deployable face — see `DEPLOY.md`):
+
+```bash
+pip install -e ".[service]"
+uvicorn memoryagent.app:app --port 8000   # POST /chat · GET /memory/{user}/recall · POST /memory/{user}/forget
+```
+
 Backend is **100% Qwen Cloud**: chat + embeddings both call DashScope's OpenAI-compatible
 endpoint. See `DEPLOY.md` for the Alibaba Cloud (Function Compute / ECS) deployment proof.
 
@@ -66,7 +73,7 @@ so cosine similarity is real and recall ranking is verifiable).
 
 ```
 pip install -e ".[dev]"   # or: pip install pytest
-pytest                    # 12 tests, ~1s, no key required
+pytest                    # 18 tests, ~1s, no key required (install ".[service]" to include the HTTP tests)
 ```
 
 ## Repo layout
@@ -78,6 +85,7 @@ src/memoryagent/
   memory.py     the 3-layer store: recall / extract / forget  ← the heart
   agent.py      the turn loop
   cli.py        cross-session REPL demo
+  app.py        FastAPI service variant (same engine, HTTP API)  ← deployable
 tests/          pytest suite — runs without a key (fakes the network calls)
 pyproject.toml  packaging + pytest config
 Dockerfile      Alibaba Cloud deployable
@@ -89,7 +97,7 @@ docs/architecture.svg   system diagram (for the submission)
 - [x] Built on Qwen models via Qwen Cloud
 - [x] Open-source repo + license (MIT)
 - [x] Tests for recall / forget / bounded budget (run keyless via monkeypatch)
-- [ ] Proof of Alibaba Cloud deployment (`DEPLOY.md` + Dockerfile)
+- [x] Proof of Alibaba Cloud deployment (`DEPLOY.md` + Dockerfile + FastAPI `app.py`)
 - [ ] Architecture diagram (`docs/architecture.svg`)
 - [ ] < 3-min demo video (script in `docs/demo-script.md`)
 - [ ] (bonus) build-journey blog post
