@@ -19,7 +19,7 @@ import re
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from . import config
+from . import config, policy
 from .agent import MemoryAgent
 from .memory import MemoryStore
 
@@ -63,7 +63,11 @@ class RecallOut(BaseModel):
 
 @app.get("/healthz")
 def healthz():
-    return {"ok": True, "memory_dir": config.MEMORY_DIR, "chat_model": config.CHAT_MODEL}
+    # Operators of a hosted deployment accept the Terms/AUP on their users' behalf and must
+    # surface them downstream (see CONSENT.md / docs/legal/). The safety preamble + input
+    # screen apply on every /chat regardless.
+    return {"ok": True, "memory_dir": config.MEMORY_DIR, "chat_model": config.CHAT_MODEL,
+            "policy_version": policy.POLICY_VERSION}
 
 
 @app.post("/chat", response_model=ChatOut)
