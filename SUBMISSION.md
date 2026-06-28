@@ -61,7 +61,7 @@ store) — mount it on a persistent volume. Full steps in [`DEPLOY.md`](DEPLOY.m
 ```bash
 # keyless: tests + evaluation, no API key needed
 pip install -r requirements.txt
-python -m pytest -q          # 18 tests
+python -m pytest -q          # 26 tests
 python eval.py               # salience 8/8 vs naive 0/8
 
 # live: add a Qwen Cloud (DashScope) key, prove cross-session recall
@@ -77,7 +77,7 @@ uvicorn memoryagent.app:app --port 8000
 
 - [x] Working agent — CLI + FastAPI service (`src/memoryagent/`)
 - [x] Built on Qwen Cloud (DashScope OpenAI-compatible; `qwen3.7-plus`, `text-embedding-v4`)
-- [x] Keyless test suite — 18 tests, CI on Python 3.9–3.12 (`.github/workflows/ci.yml`)
+- [x] Keyless test suite — 26 tests, CI on Python 3.9–3.12 (parked as `docs/ci-workflow.yml.txt`; copy to `.github/workflows/ci.yml` to enable)
 - [x] Evaluation quantifying the memory engine (`eval.py` — 8/8 vs 0/8)
 - [x] Architecture diagram (`docs/architecture.svg`)
 - [x] Demo script for the <3-min video (`docs/demo-script.md`)
