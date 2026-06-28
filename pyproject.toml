@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aegis-memoryagent"
+version = "0.1.0"
+description = "A persistent-memory agent on Qwen Cloud — bounded recall, decay-based forgetting, cross-session memory (Qwen Cloud Hackathon, Track 1)."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Ben Duske" }]
+dependencies = []  # stdlib-only runtime
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+service = ["fastapi", "uvicorn"]
+
+[project.scripts]
+memoryagent = "memoryagent.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "tests"]
+testpaths = ["tests"]
+addopts = "-q"
