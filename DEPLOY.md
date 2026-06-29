@@ -26,6 +26,13 @@ Get an API key from Alibaba Cloud **Model Studio** (DashScope). The agent reads:
 
 > CN-region endpoint: `https://dashscope.aliyuncs.com/compatible-mode/v1`.
 
+> **Model IDs verified current** against the official Alibaba Cloud Model Studio
+> *DashScope API reference* (updated 2026-06-24) and *OpenAI-compatible — Chat*
+> guide (updated 2026-06-25): `qwen3.7-plus` and `text-embedding-v4` are live
+> Model Studio model IDs reachable over the OpenAI-compatible `/chat/completions`
+> and `/embeddings` paths. Swap to `qwen-max` / `qwen-turbo` via `QWEN_CHAT_MODEL`
+> with no code change.
+
 ## 1. Container build (the deployable artifact)
 
 The `Dockerfile` defaults to the CLI. For the service, run uvicorn against the same image:
