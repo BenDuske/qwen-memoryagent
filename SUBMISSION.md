@@ -59,7 +59,10 @@ store) — mount it on a persistent volume. Full steps in [`DEPLOY.md`](DEPLOY.m
 ## Run it yourself
 
 ```bash
-# keyless: tests + evaluation, no API key needed
+# keyless reproduce in one command (install + 26 tests + evaluation, no API key)
+make verify
+
+# …or the same steps by hand:
 pip install -r requirements.txt
 python -m pytest -q          # 26 tests
 python eval.py               # salience 8/8 vs naive 0/8
