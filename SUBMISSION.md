@@ -49,6 +49,10 @@ A live cross-session run against `qwen3.7-plus` + `text-embedding-v4` is capture
 on-disk store with no replayed history**, yet it recalls what Session 1 taught it. That is the
 Track-1 point — recall from a managed store, not a giant replayed transcript.
 
+This is **reproducible, not a one-off capture**: an independent second run on a later date
+([`docs/transcripts/live-cross-session-demo.md`](docs/transcripts/live-cross-session-demo.md))
+shows the same cross-session recall against the live endpoint.
+
 ## Deploy (Alibaba Cloud)
 
 Runtime is **stdlib-only** for chat + embeddings (over `urllib`), so the container is tiny and
