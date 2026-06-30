@@ -1,6 +1,37 @@
 # Aegis MemoryAgent — © 2026 Ben Duske. Licensed under the MIT License (see LICENSE).
-"""Configuration — all via env (see .env.example)."""
+"""Configuration — all via env (see .env.example).
+
+Env is loaded from the process environment first, then (for any keys not already set) from a
+local `.env` at the repo root — so `cp .env.example .env` works exactly as the README documents,
+with no extra dependency. An optional OpenClaw credentials file is also honored as a fallback.
+"""
 import os
+
+
+def _load_env_files() -> None:
+    """Fill os.environ from .env files for keys not already set (no override, no dependency)."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(here, "..", "..", ".env"),                 # repo-root .env (documented path)
+        os.path.expanduser("~/.openclaw/credentials/qwen.env"),  # optional local credentials fallback
+    ]
+    for path in candidates:
+        try:
+            with open(path, encoding="utf-8") as fh:
+                for raw in fh:
+                    line = raw.strip()
+                    if not line or line.startswith("#") or "=" not in line:
+                        continue
+                    key, _, val = line.partition("=")
+                    key = key.strip()
+                    val = val.strip().strip('"').strip("'")
+                    if key and key not in os.environ:
+                        os.environ[key] = val
+        except OSError:
+            pass
+
+
+_load_env_files()
 
 QWEN_BASE_URL = os.environ.get("QWEN_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
 QWEN_API_KEY  = os.environ.get("QWEN_API_KEY") or os.environ.get("DASHSCOPE_API_KEY", "")
