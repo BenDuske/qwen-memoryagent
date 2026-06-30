@@ -73,6 +73,9 @@ store) — mount it on a persistent volume. Full steps in [`DEPLOY.md`](DEPLOY.m
 # keyless reproduce in one command (install + 26 tests + evaluation, no API key)
 make verify
 
+# …no make? (e.g. Windows judges) same keyless check, cross-platform:
+python scripts/verify.py
+
 # …or the same steps by hand:
 pip install -r requirements.txt
 python -m pytest -q          # 26 tests
