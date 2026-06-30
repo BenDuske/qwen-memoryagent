@@ -120,6 +120,12 @@ history attached, yet the reply respects the peanut allergy — because memory w
 **recalled from the store**, not pasted from a transcript, and only the highest-salience
 memories within `RECALL_TOKEN_BUDGET` were injected.
 
+A captured live run that goes one step further — teaching over one process, **fully
+restarting the service**, then recalling over a second process on the same `MEMORY_DIR`
+— is in [`docs/transcripts/live-http-service-demo.md`](docs/transcripts/live-http-service-demo.md)
+(regenerate with `python scripts/live_http_demo.py`). It demonstrates the memory survives
+a real container restart, which is exactly why `MEMORY_DIR` must be a persistent volume.
+
 ## 5. Cost / scaling notes
 - Embeddings are cached on disk inside each memory item (`emb`), so re-recall costs
   no Qwen calls — only *new* facts/episodes embed.

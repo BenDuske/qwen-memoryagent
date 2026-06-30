@@ -53,6 +53,13 @@ This is **reproducible, not a one-off capture**: an independent second run on a 
 ([`docs/transcripts/live-cross-session-demo.md`](docs/transcripts/live-cross-session-demo.md))
 shows the same cross-session recall against the live endpoint.
 
+The same guarantee holds for the **deployable HTTP face**: a live run that teaches the agent
+over one `uvicorn` process, **fully restarts the service**, then recalls over a second process
+on the same on-disk `MEMORY_DIR`
+([`docs/transcripts/live-http-service-demo.md`](docs/transcripts/live-http-service-demo.md))
+— so cross-session memory survives a real container restart, not just a CLI re-run.
+Regenerate with `python scripts/live_http_demo.py`.
+
 ## Deploy (Alibaba Cloud)
 
 Runtime is **stdlib-only** for chat + embeddings (over `urllib`), so the container is tiny and
@@ -90,6 +97,7 @@ uvicorn memoryagent.app:app --port 8000
 - [x] Demo script for the <3-min video (`docs/demo-script.md`)
 - [x] Deploy guide for Alibaba Cloud (`DEPLOY.md` + `Dockerfile`)
 - [x] Live cross-session transcript on Qwen Cloud (`docs/sample-run.md`)
+- [x] Live HTTP-service restart proof (`docs/transcripts/live-http-service-demo.md` via `scripts/live_http_demo.py`)
 - [x] Build-journey blog draft, bonus prize (`docs/blog-build-journey.md`)
 - [x] License (MIT) + third-party notices
 
