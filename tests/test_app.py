@@ -72,3 +72,27 @@ def test_forget_endpoint(client):
     r = client.post("/memory/ben/forget")
     assert r.status_code == 200
     assert "dropped" in r.json()
+
+
+def test_stats_endpoint(client):
+    # Teach one fact, then read stats directly via the dedicated endpoint.
+    client.post("/chat", json={"user": "ben", "text": "I am allergic to peanuts"})
+    r = client.get("/memory/ben/stats")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["facts"] >= 1
+    assert {"facts", "episodes", "prefs"} <= set(body)
+
+
+def test_chat_engine_error_surfaces_as_502(client, monkeypatch):
+    # A failure inside the memory engine (e.g. Qwen Cloud unreachable) must be
+    # reported as a 502 Bad Gateway, not a bare 500 — pins the `except` guard.
+    agent = app_module._agent_for("ben")
+
+    def boom(text):
+        raise RuntimeError("qwen cloud unreachable")
+
+    monkeypatch.setattr(agent, "chat", boom)
+    r = client.post("/chat", json={"user": "ben", "text": "hello"})
+    assert r.status_code == 502
+    assert "qwen cloud unreachable" in r.json()["detail"]
