@@ -48,10 +48,11 @@ class MemoryStore:
         out = []
         p = self._p(name)
         if os.path.exists(p):
-            for line in open(p, encoding="utf-8"):
-                line = line.strip()
-                if line:
-                    out.append(json.loads(line))
+            with open(p, encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        out.append(json.loads(line))
         return out
 
     def _save_jsonl(self, name, items):
@@ -61,11 +62,14 @@ class MemoryStore:
 
     def _load_prefs(self):
         p = self._p("prefs.json")
-        return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {}
+        if not os.path.exists(p):
+            return {}
+        with open(p, encoding="utf-8") as f:
+            return json.load(f)
 
     def _save_prefs(self):
-        json.dump(self.prefs, open(self._p("prefs.json"), "w", encoding="utf-8"),
-                  ensure_ascii=False, indent=2)
+        with open(self._p("prefs.json"), "w", encoding="utf-8") as f:
+            json.dump(self.prefs, f, ensure_ascii=False, indent=2)
 
     # ---- writes ----
     def add_fact(self, text: str, importance: float = 0.6):
