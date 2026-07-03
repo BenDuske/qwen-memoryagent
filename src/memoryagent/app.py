@@ -16,6 +16,7 @@ Run locally:
 """
 import os
 import re
+import threading
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -34,6 +35,13 @@ app = FastAPI(
 # the durable part — it lives on disk under MEMORY_DIR/<user>.
 _AGENTS: dict[str, MemoryAgent] = {}
 _SAFE_USER = re.compile(r"[^a-zA-Z0-9_.-]")
+# FastAPI runs these sync handlers in a threadpool, so requests for the SAME new
+# user can race the get-or-create below. Without this guard two threads both pass
+# the `not in` check and each builds a MemoryStore over the same on-disk root;
+# their independent in-memory lists then full-file-rewrite over each other =
+# lost writes. The lock serializes only agent creation (a fast, one-time cost per
+# user); steady-state requests hit the cache and never contend.
+_AGENTS_LOCK = threading.Lock()
 
 
 def _user_root(user: str) -> str:
@@ -42,9 +50,16 @@ def _user_root(user: str) -> str:
 
 
 def _agent_for(user: str) -> MemoryAgent:
-    if user not in _AGENTS:
-        _AGENTS[user] = MemoryAgent(MemoryStore(root=_user_root(user)))
-    return _AGENTS[user]
+    agent = _AGENTS.get(user)
+    if agent is not None:
+        return agent
+    with _AGENTS_LOCK:
+        # Double-checked: another thread may have created it while we waited.
+        agent = _AGENTS.get(user)
+        if agent is None:
+            agent = MemoryAgent(MemoryStore(root=_user_root(user)))
+            _AGENTS[user] = agent
+        return agent
 
 
 class ChatIn(BaseModel):

@@ -5,6 +5,9 @@ as the rest of the suite, via conftest), and the app is exercised in-process wit
 Starlette's TestClient. Skipped cleanly if FastAPI isn't installed, so the keyless
 core suite never depends on the optional `service` extra.
 """
+import threading
+import time
+
 import pytest
 
 pytest.importorskip("fastapi", reason="install the 'service' extra to run app tests")
@@ -82,6 +85,50 @@ def test_stats_endpoint(client):
     body = r.json()
     assert body["facts"] >= 1
     assert {"facts", "episodes", "prefs"} <= set(body)
+
+
+def test_agent_for_is_race_safe_for_new_user(patched, monkeypatch):
+    # FastAPI serves sync handlers from a threadpool, so concurrent requests for
+    # the SAME new user race the get-or-create in _agent_for. Two stores over one
+    # on-disk root => full-file rewrites clobber each other => lost writes. Pin
+    # that exactly one MemoryStore is built and every caller gets that one object.
+    monkeypatch.setattr(app_module, "_AGENTS", {})
+
+    builds = []
+    builds_lock = threading.Lock()
+    real_store = app_module.MemoryStore
+
+    def counting_store(*args, **kwargs):
+        # Widen the construct window so the unguarded race is near-certain to
+        # double-build; with the lock, only the first thread ever gets here.
+        time.sleep(0.02)
+        with builds_lock:
+            builds.append(1)
+        return real_store(*args, **kwargs)
+
+    monkeypatch.setattr(app_module, "MemoryStore", counting_store)
+
+    n = 8
+    barrier = threading.Barrier(n)
+    got = []
+    got_lock = threading.Lock()
+
+    def worker():
+        barrier.wait()  # release all threads into _agent_for at once
+        a = app_module._agent_for("racer")
+        with got_lock:
+            got.append(a)
+
+    threads = [threading.Thread(target=worker) for _ in range(n)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert sum(builds) == 1, f"expected exactly one store build, got {sum(builds)}"
+    assert len(got) == n
+    assert all(a is got[0] for a in got), "callers got different agent instances"
+    assert app_module._AGENTS["racer"] is got[0]
 
 
 def test_chat_engine_error_surfaces_as_502(client, monkeypatch):
