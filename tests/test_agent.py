@@ -1,4 +1,6 @@
 """MemoryAgent turn loop: recall -> answer -> learn -> forget, and cross-session recall."""
+import pytest
+
 from memoryagent import qwen
 from memoryagent.memory import MemoryStore
 from memoryagent.agent import MemoryAgent
@@ -51,3 +53,43 @@ def test_learn_survives_bad_extractor_json(monkeypatch, patched):
     reply = agent.chat("hello there")  # must not raise
     assert reply == "not json at all"
     assert agent.mem.stats()["facts"] == 0
+
+
+@pytest.mark.parametrize("payload", [
+    '{"prefs": ["not", "a", "dict"]}',   # prefs is a list -> .items() would blow up
+    '{"facts": [{"nested": 1}]}',        # a fact is a dict -> .strip() would blow up
+    '{"episode": 123}',                  # episode is an int -> .strip() would blow up
+    '["totally", "wrong", "shape"]',     # top-level JSON isn't even an object
+])
+def test_learn_survives_wellformed_json_with_bad_types(monkeypatch, patched, payload):
+    # The extractor can return VALID JSON that still carries the wrong types. That
+    # parses cleanly (so the earlier try/except doesn't catch it) but the apply loop
+    # runs AFTER the reply is generated — a type error there must not crash the turn
+    # and swallow an answer the user already earned.
+    monkeypatch.setattr(qwen, "chat",
+                        lambda messages, model=None, temperature=0.4: payload)
+    agent = MemoryAgent(MemoryStore(root=str(patched / "badtypes")))
+
+    reply = agent.chat("hello there")  # must not raise
+
+    assert reply == payload            # the answer is returned intact
+    # Nothing mis-typed was stored.
+    assert agent.mem.stats()["facts"] == 0
+    assert agent.mem.stats()["episodes"] == 0
+    assert agent.mem.stats()["prefs"] == 0
+
+
+def test_learn_keeps_valid_items_from_a_mixed_list(monkeypatch, patched):
+    # A list mixing a bad-typed fact with a good one keeps the good one and drops
+    # the bad one, rather than aborting the whole extraction on the first bad item.
+    monkeypatch.setattr(
+        qwen, "chat",
+        lambda messages, model=None, temperature=0.4:
+        '{"facts": [{"nested": 1}, "The user keeps bees"], "prefs": {"tone": "curt"}}')
+    agent = MemoryAgent(MemoryStore(root=str(patched / "mixed")))
+
+    agent.chat("hello there")  # must not raise
+
+    assert any("keeps bees" in f["text"] for f in agent.mem.facts)
+    assert len(agent.mem.facts) == 1                       # the dict was skipped
+    assert agent.mem.prefs.get("tone", {}).get("value") == "curt"

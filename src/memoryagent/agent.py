@@ -51,11 +51,23 @@ class MemoryAgent:
             data = json.loads(raw[raw.find("{"): raw.rfind("}") + 1])
         except Exception:
             data = {}
-        for fact in data.get("facts", []) or []:
-            self.mem.add_fact(fact)
-        for k, v in (data.get("prefs", {}) or {}).items():
-            self.mem.set_pref(k, v)
+        if not isinstance(data, dict):
+            data = {}
+        # The extractor output is untrusted LLM JSON: it can PARSE cleanly yet still
+        # carry the wrong TYPES (facts holding a dict, prefs as a list, a non-string
+        # episode). _learn is best-effort background enrichment and runs AFTER the
+        # reply is produced, so a type error here must never crash the turn and lose
+        # an answer the user already earned. Skip anything mis-typed instead.
+        facts = data.get("facts")
+        if isinstance(facts, list):
+            for fact in facts:
+                if isinstance(fact, str):
+                    self.mem.add_fact(fact)
+        prefs = data.get("prefs")
+        if isinstance(prefs, dict):
+            for k, v in prefs.items():
+                self.mem.set_pref(k, v)
         episode = data.get("episode")
-        if episode:
+        if isinstance(episode, str):
             self.mem.add_episode(episode)
         self.mem.forget()
