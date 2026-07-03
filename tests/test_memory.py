@@ -30,6 +30,30 @@ def test_recall_is_bounded_by_token_budget(store):
     assert picked, "budget should still admit at least one memory"
 
 
+def test_recall_greedy_pack_skips_oversized_for_smaller(store):
+    # The pack loop must SKIP a too-big memory and keep scanning, not HALT on it:
+    # a highest-salience item that overflows the budget should not block a smaller,
+    # lower-salience item behind it from filling the remaining room.
+    #
+    # Under the bag-of-words fake embedder, "hiking mountains" repeated has a
+    # perfect cosine (1.0) with the query but is long; bare "hiking" scores lower
+    # (~0.707) but is tiny. So the big item ranks FIRST yet overflows the budget.
+    # Existing budget tests use uniformly-sized facts and pass identically whether
+    # the loop uses `continue` or `break`; this pins the greedy-pack behavior so a
+    # `continue`->`break` regression (which silently under-fills recall) is caught.
+    big = "hiking mountains " * 24            # perfect cosine, but oversized
+    store.add_fact(big, importance=0.6)
+    store.add_fact("hiking", importance=0.6)  # lower cosine, fits in the leftover
+
+    budget = 40
+    assert _approx_tokens(big) > budget, "big item must overflow the whole budget"
+    picked, _ = store.recall("hiking mountains", token_budget=budget, top_k=100)
+
+    texts = [p["text"] for p in picked]
+    assert "hiking" in texts, "smaller lower-salience memory should still be packed"
+    assert big not in texts, "oversized top-ranked memory should be skipped"
+
+
 def test_recall_top_k_caps_count(store):
     for i in range(20):
         store.add_fact(f"hiking fact {i} mountains trails forests")

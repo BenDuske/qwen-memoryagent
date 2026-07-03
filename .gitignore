@@ -6,6 +6,9 @@ __pycache__/
 .venv/
 *.egg-info/
 .pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
 
 # Local demo / scratch memory stores (created by manual demo runs — never commit)
 .demo-mem/
