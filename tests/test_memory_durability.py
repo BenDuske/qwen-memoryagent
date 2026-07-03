@@ -47,6 +47,49 @@ def test_corrupt_prefs_degrades_to_empty(patched):
     assert reloaded.prefs == {}
 
 
+def test_legacy_shaped_prefs_are_normalized_not_fatal(patched):
+    """A valid-but-legacy prefs.json (bare values, not wrapped in {"value","ts"})
+    must load into the canonical shape so downstream readers that do v["value"]
+    (agent._build_system) never crash a chat turn."""
+    from memoryagent.agent import MemoryAgent
+
+    root = str(patched / "legacyprefs")
+    s = MemoryStore(root=root)
+    s.set_pref("tone", "blunt")            # canonical entry we must preserve
+
+    # Overwrite with a mix: one canonical entry and two bare/legacy entries.
+    with open(s._p("prefs.json"), "w", encoding="utf-8") as f:
+        json.dump({
+            "tone": {"value": "blunt", "ts": 123.0},   # canonical — keep as-is
+            "name": "Ben",                               # bare string — must wrap
+            "quiet_hours": ["22:00", "07:00"],           # bare list — must wrap
+        }, f)
+
+    reloaded = MemoryStore(root=root)
+    # Every entry is now the canonical {"value": ...} shape.
+    assert reloaded.prefs["tone"] == {"value": "blunt", "ts": 123.0}
+    assert reloaded.prefs["name"]["value"] == "Ben"
+    assert reloaded.prefs["quiet_hours"]["value"] == ["22:00", "07:00"]
+
+    # And the chat recall path (which reads v["value"] for every pref) no longer
+    # raises TypeError on the legacy entries — pre-fix this crashed every turn.
+    agent = MemoryAgent(reloaded)
+    assert agent.chat("hello") == "ok (stubbed reply)"
+
+
+def test_non_dict_prefs_json_degrades_to_empty(patched):
+    """A prefs.json that is valid JSON but not an object (e.g. a list) must not
+    become an unusable prefs mapping — degrade to {} like a corrupt file."""
+    root = str(patched / "listprefs")
+    s = MemoryStore(root=root)
+    s.set_pref("name", "Ben")
+    with open(s._p("prefs.json"), "w", encoding="utf-8") as f:
+        f.write('["not", "an", "object"]')
+
+    reloaded = MemoryStore(root=root)      # must not raise
+    assert reloaded.prefs == {}
+
+
 def test_saves_are_atomic_no_partial_file_on_crash(patched, monkeypatch):
     """If rendering blows up mid-write, os.replace never runs, so the live file
     is either the prior good version or (first write) absent — never torn."""

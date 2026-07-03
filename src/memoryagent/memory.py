@@ -93,11 +93,31 @@ class MemoryStore:
             return {}
         try:
             with open(p, encoding="utf-8") as f:
-                return json.load(f)
+                raw = json.load(f)
         except (json.JSONDecodeError, ValueError):
             # A corrupt prefs.json degrades to empty prefs rather than crashing
             # __init__ (which would make the whole agent unstartable).
             return {}
+        return self._normalize_prefs(raw)
+
+    @staticmethod
+    def _normalize_prefs(raw):
+        # set_pref always writes {"value": ..., "ts": ...}, but a legacy, migrated,
+        # or hand-edited prefs.json can be valid JSON yet carry a different shape
+        # (e.g. a bare {"name": "Ben"}). Consumers like agent._build_system read
+        # v["value"] for every pref, so a bare value there raises TypeError and
+        # crashes EVERY chat turn on the recall path — before the user gets a reply.
+        # Normalise at the boundary so the in-memory prefs always have the expected
+        # shape: keep a well-formed {"value": ...} entry as-is, wrap anything else.
+        if not isinstance(raw, dict):
+            return {}
+        out = {}
+        for k, v in raw.items():
+            if isinstance(v, dict) and "value" in v:
+                out[str(k)] = v
+            else:
+                out[str(k)] = {"value": v, "ts": 0.0}
+        return out
 
     def _save_prefs(self):
         self._atomic_write(
