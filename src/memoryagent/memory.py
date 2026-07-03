@@ -21,10 +21,16 @@ def _now() -> float:
     return time.time()
 
 
-def _cosine(a, b) -> float:
+def _norm(v) -> float:
+    return math.sqrt(sum(x * x for x in v))
+
+
+def _cosine(a, b, b_norm: float = None) -> float:
+    # b_norm lets a caller hoist the query-vector norm out of a recall loop:
+    # it is recomputed here only when not supplied, so results are identical.
     s = sum(x * y for x, y in zip(a, b))
     na = math.sqrt(sum(x * x for x in a))
-    nb = math.sqrt(sum(y * y for y in b))
+    nb = b_norm if b_norm is not None else _norm(b)
     return s / (na * nb) if na and nb else 0.0
 
 
@@ -94,8 +100,8 @@ class MemoryStore:
         self._save_prefs()
 
     # ---- recall (bounded by token budget) ----
-    def _salience(self, item, q_emb):
-        sim = _cosine(item["emb"], q_emb)
+    def _salience(self, item, q_emb, q_norm: float = None):
+        sim = _cosine(item["emb"], q_emb, q_norm)
         age_days = (_now() - item["ts"]) / 86400.0
         recency = 0.5 ** (age_days / config.DECAY_HALFLIFE_DAYS)
         return sim * 0.65 + recency * 0.20 + item.get("importance", 0.4) * 0.15
@@ -104,7 +110,8 @@ class MemoryStore:
         token_budget = token_budget or config.RECALL_TOKEN_BUDGET
         top_k = top_k or config.RECALL_TOP_K
         q_emb = qwen.embed(query)[0]
-        scored = [(self._salience(it, q_emb), it) for it in (self.facts + self.episodic)]
+        q_norm = _norm(q_emb)  # hoisted out of the per-item loop (was recomputed N times)
+        scored = [(self._salience(it, q_emb, q_norm), it) for it in (self.facts + self.episodic)]
         scored.sort(key=lambda x: x[0], reverse=True)
         picked, used = [], 0
         for _, it in scored:
