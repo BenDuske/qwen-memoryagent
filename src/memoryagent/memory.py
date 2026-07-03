@@ -50,6 +50,19 @@ class MemoryStore:
     def _p(self, name):
         return os.path.join(self.root, name)
 
+    def _atomic_write(self, name, render):
+        # Crash-safe write: render fully to a temp file, fsync, then os.replace()
+        # (atomic on POSIX and Windows for same-dir paths). A crash/power-loss
+        # mid-write leaves the old file intact instead of a torn one, so a single
+        # interrupted save can never corrupt the store and take down startup.
+        p = self._p(name)
+        tmp = p + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            render(f)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, p)
+
     def _load_jsonl(self, name):
         out = []
         p = self._p(name)
@@ -57,25 +70,40 @@ class MemoryStore:
             with open(p, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
-                    if line:
+                    if not line:
+                        continue
+                    try:
                         out.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        # Defense-in-depth: a single torn/corrupt record (e.g. from a
+                        # pre-atomic-write crash or external tampering) must not nuke
+                        # the whole store — skip it, keep every valid memory.
+                        continue
         return out
 
     def _save_jsonl(self, name, items):
-        with open(self._p(name), "w", encoding="utf-8") as f:
+        def render(f):
             for it in items:
                 f.write(json.dumps(it, ensure_ascii=False) + "\n")
+        self._atomic_write(name, render)
 
     def _load_prefs(self):
         p = self._p("prefs.json")
         if not os.path.exists(p):
             return {}
-        with open(p, encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(p, encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, ValueError):
+            # A corrupt prefs.json degrades to empty prefs rather than crashing
+            # __init__ (which would make the whole agent unstartable).
+            return {}
 
     def _save_prefs(self):
-        with open(self._p("prefs.json"), "w", encoding="utf-8") as f:
-            json.dump(self.prefs, f, ensure_ascii=False, indent=2)
+        self._atomic_write(
+            "prefs.json",
+            lambda f: json.dump(self.prefs, f, ensure_ascii=False, indent=2),
+        )
 
     # ---- writes ----
     def add_fact(self, text: str, importance: float = 0.6):
