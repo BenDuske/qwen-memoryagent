@@ -63,6 +63,26 @@ class MemoryStore:
             os.fsync(f.fileno())
         os.replace(tmp, p)
 
+    @staticmethod
+    def _valid_memory_record(rec) -> bool:
+        # A memory record is only usable if it carries the fields the recall/forget
+        # paths dereference WITHOUT a default: text (packed + deduped), emb (scored by
+        # _cosine), ts (recency). importance is read via .get so it stays optional.
+        # A record can be valid JSON yet schema-incomplete — a hand-edit, a partial
+        # migration, or a foreign/older writer — and json.loads accepts it; without
+        # this guard it then crashes recall on item["emb"] (or forget on it["ts"])
+        # on the hot path, before the user gets a reply. bool avoids bool-is-int here.
+        if not isinstance(rec, dict):
+            return False
+        text = rec.get("text")
+        if not isinstance(text, str) or not text.strip():
+            return False
+        emb = rec.get("emb")
+        if not isinstance(emb, list) or not emb or not all(
+                isinstance(x, (int, float)) and not isinstance(x, bool) for x in emb):
+            return False
+        return isinstance(rec.get("ts"), (int, float)) and not isinstance(rec.get("ts"), bool)
+
     def _load_jsonl(self, name):
         out = []
         p = self._p(name)
@@ -73,12 +93,16 @@ class MemoryStore:
                     if not line:
                         continue
                     try:
-                        out.append(json.loads(line))
+                        rec = json.loads(line)
                     except json.JSONDecodeError:
                         # Defense-in-depth: a single torn/corrupt record (e.g. from a
                         # pre-atomic-write crash or external tampering) must not nuke
                         # the whole store — skip it, keep every valid memory.
                         continue
+                    # Same spirit for a record that PARSED but is schema-incomplete:
+                    # drop the unusable line rather than let it crash recall/forget.
+                    if self._valid_memory_record(rec):
+                        out.append(rec)
         return out
 
     def _save_jsonl(self, name, items):

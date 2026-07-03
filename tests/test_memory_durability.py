@@ -131,6 +131,42 @@ def test_atomic_write_leaves_no_stray_tmp_after_success(patched):
     assert leftovers == []
 
 
+def test_schema_incomplete_record_is_skipped_not_fatal(patched):
+    """A line that PARSES as JSON but lacks the fields recall dereferences (emb/ts)
+    must be dropped like a torn line — not loaded and then crash recall on the hot
+    path. Same failure class as the torn-line and legacy-prefs guards."""
+    root = str(patched / "schema")
+    s = MemoryStore(root=root)
+    s.add_fact("User is allergic to peanuts")
+
+    # Append valid-JSON but schema-incomplete records (no emb / no ts / bad types) —
+    # the kind a hand-edit, partial migration, or foreign writer could produce.
+    with open(s._p("facts.jsonl"), "a", encoding="utf-8") as f:
+        f.write(json.dumps({"text": "no embedding here"}) + "\n")          # missing emb+ts
+        f.write(json.dumps({"text": "bad ts", "emb": [0.1], "ts": "x"}) + "\n")  # ts wrong type
+        f.write(json.dumps({"text": "", "emb": [0.1], "ts": 1.0}) + "\n")   # empty text
+        f.write(json.dumps({"emb": [0.1], "ts": 1.0}) + "\n")               # no text at all
+
+    reloaded = MemoryStore(root=root)
+    # Only the one genuine fact survives; every unusable record is dropped.
+    assert [fct["text"] for fct in reloaded.facts] == ["User is allergic to peanuts"]
+    # And recall runs clean instead of raising KeyError('emb') on the hot path.
+    picked, _prefs = reloaded.recall("peanuts")
+    assert any(p["text"] == "User is allergic to peanuts" for p in picked)
+
+
+def test_schema_incomplete_episode_does_not_crash_forget(patched):
+    """The same guard protects forget(), which dereferences it["ts"] on episodic."""
+    root = str(patched / "schema_ep")
+    s = MemoryStore(root=root)
+    with open(s._p("episodic.jsonl"), "w", encoding="utf-8") as f:
+        f.write(json.dumps({"text": "tsless episode", "emb": [0.1]}) + "\n")  # no ts
+
+    reloaded = MemoryStore(root=root)
+    assert reloaded.episodic == []          # unusable record dropped at load
+    assert reloaded.forget() == 0           # forget runs clean, nothing to prune
+
+
 def test_roundtrip_still_correct_after_atomic_change(patched):
     """Behaviour is unchanged: normal write+reload preserves facts/prefs exactly."""
     root = str(patched / "roundtrip")
