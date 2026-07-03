@@ -54,6 +54,24 @@ def test_recall_greedy_pack_skips_oversized_for_smaller(store):
     assert big not in texts, "oversized top-ranked memory should be skipped"
 
 
+def test_recall_dedups_identical_text(store):
+    # facts+episodic are merged at recall and add_episode does NOT dedup, so the
+    # same summary can appear twice. A duplicate must not consume an output slot a
+    # DISTINCT memory should hold — the highest-salience copy is kept, later exact
+    # copies are dropped. Two identical high-salience episodes plus one distinct,
+    # lower-salience fact; with top_k=2 the two dups would fill both slots and
+    # starve the distinct memory unless recall dedups by text.
+    store.add_episode("hiking mountains trip report", importance=0.6)
+    store.add_episode("hiking mountains trip report", importance=0.6)  # exact dup
+    store.add_fact("kayaking rivers", importance=0.6)                   # distinct, lower cosine
+
+    picked, _ = store.recall("hiking mountains", token_budget=100000, top_k=2)
+
+    texts = [p["text"] for p in picked]
+    assert texts.count("hiking mountains trip report") == 1, "duplicate text packed twice"
+    assert "kayaking rivers" in texts, "distinct memory should get the slot the dup wasted"
+
+
 def test_recall_top_k_caps_count(store):
     for i in range(20):
         store.add_fact(f"hiking fact {i} mountains trails forests")

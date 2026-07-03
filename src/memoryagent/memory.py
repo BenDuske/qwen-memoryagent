@@ -113,13 +113,21 @@ class MemoryStore:
         q_norm = _norm(q_emb)  # hoisted out of the per-item loop (was recomputed N times)
         scored = [(self._salience(it, q_emb, q_norm), it) for it in (self.facts + self.episodic)]
         scored.sort(key=lambda x: x[0], reverse=True)
-        picked, used = [], 0
+        picked, used, seen = [], 0, set()
         for _, it in scored:
+            # Skip a memory whose text was already packed: facts+episodic are merged
+            # and add_episode does not dedup, so identical text can appear twice.
+            # Spending the bounded budget on a duplicate would starve a distinct
+            # memory of its slot; the highest-salience copy is kept, later ones dropped.
+            key = it["text"].strip()
+            if key in seen:
+                continue
             cost = _approx_tokens(it["text"])
             if used + cost > token_budget:
                 continue
             picked.append(it)
             used += cost
+            seen.add(key)
             if len(picked) >= top_k:
                 break
         return picked, self.prefs
