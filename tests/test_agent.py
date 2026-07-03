@@ -79,6 +79,35 @@ def test_learn_survives_wellformed_json_with_bad_types(monkeypatch, patched, pay
     assert agent.mem.stats()["prefs"] == 0
 
 
+def test_learn_survives_transient_embed_failure(monkeypatch, patched):
+    # add_fact/add_episode each make a live qwen.embed HTTP call, and _learn runs
+    # AFTER the reply is generated. A transient Qwen Cloud failure (429/500/blip) on
+    # that embed must NOT propagate out of chat() and discard the earned reply.
+    # The recall embed at the top of the turn succeeds; the learning embed fails.
+    from conftest import fake_embed
+    calls = {"n": 0}
+
+    def flaky_embed(texts):
+        calls["n"] += 1
+        if calls["n"] == 1:      # recall's query embed — the turn is still viable
+            return fake_embed(texts)
+        raise RuntimeError("Qwen Cloud HTTP 429: rate limited")  # learning embed
+
+    monkeypatch.setattr(qwen, "embed", flaky_embed)
+    monkeypatch.setattr(
+        qwen, "chat",
+        lambda messages, model=None, temperature=0.4:
+        ('{"facts": ["User likes tea"], "episode": "chatted about tea"}'
+         if "extract durable memory" in messages[0]["content"].lower()
+         else "Here is the hard-earned answer."))
+    agent = MemoryAgent(MemoryStore(root=str(patched / "flaky")))
+
+    reply = agent.chat("tell me about tea")  # must not raise
+
+    assert reply == "Here is the hard-earned answer."  # the answer survives
+    assert agent.mem.stats()["facts"] == 0             # the failed write left nothing
+
+
 def test_learn_keeps_valid_items_from_a_mixed_list(monkeypatch, patched):
     # A list mixing a bad-typed fact with a good one keeps the good one and drops
     # the bad one, rather than aborting the whole extraction on the first bad item.

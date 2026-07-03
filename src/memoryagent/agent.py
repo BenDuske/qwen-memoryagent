@@ -53,21 +53,38 @@ class MemoryAgent:
             data = {}
         if not isinstance(data, dict):
             data = {}
-        # The extractor output is untrusted LLM JSON: it can PARSE cleanly yet still
-        # carry the wrong TYPES (facts holding a dict, prefs as a list, a non-string
-        # episode). _learn is best-effort background enrichment and runs AFTER the
-        # reply is produced, so a type error here must never crash the turn and lose
-        # an answer the user already earned. Skip anything mis-typed instead.
+        # _learn is best-effort background enrichment and runs AFTER the reply is
+        # produced, so NOTHING here may crash the turn and lose an answer the user
+        # already earned. Two distinct failure modes are guarded:
+        #  1. TYPE: the extractor is untrusted LLM JSON that can PARSE cleanly yet
+        #     carry the wrong types (a fact holding a dict, prefs as a list, a
+        #     non-string episode) — the isinstance checks skip those, keeping the
+        #     valid items in a mixed list.
+        #  2. TRANSPORT/IO: add_fact/add_episode each make a live qwen.embed HTTP
+        #     call, and every write touches disk — a transient Qwen Cloud failure
+        #     (429/500/network blip) or a disk error would otherwise propagate out
+        #     of chat() and discard the already-generated reply. _safe isolates each
+        #     write so one failure neither crashes the turn nor drops the others.
         facts = data.get("facts")
         if isinstance(facts, list):
             for fact in facts:
                 if isinstance(fact, str):
-                    self.mem.add_fact(fact)
+                    self._safe(self.mem.add_fact, fact)
         prefs = data.get("prefs")
         if isinstance(prefs, dict):
             for k, v in prefs.items():
-                self.mem.set_pref(k, v)
+                self._safe(self.mem.set_pref, k, v)
         episode = data.get("episode")
         if isinstance(episode, str):
-            self.mem.add_episode(episode)
-        self.mem.forget()
+            self._safe(self.mem.add_episode, episode)
+        self._safe(self.mem.forget)
+
+    @staticmethod
+    def _safe(fn, *args):
+        # Run a best-effort enrichment write, swallowing any failure. Learning must
+        # never surface an error to the turn; a lost memory write is acceptable, a
+        # lost reply is not. The next turn re-attempts enrichment from fresh input.
+        try:
+            fn(*args)
+        except Exception:
+            pass
