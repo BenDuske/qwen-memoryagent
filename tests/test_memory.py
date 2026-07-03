@@ -79,6 +79,30 @@ def test_recall_top_k_caps_count(store):
     assert len(picked) <= 5
 
 
+def test_recall_honors_explicit_zero_budget(store):
+    # The /recall endpoint exists to make the bounded-recall guarantee OBSERVABLE,
+    # and 0 is the natural way to probe the boundary. `token_budget or default`
+    # would coerce an explicit 0 back to the full default and return a misleading
+    # non-empty result; `is None` guarding must let 0 through -> nothing fits.
+    for i in range(5):
+        store.add_fact(f"hiking fact {i} mountains trails forests")
+    # Sanity: the same store recalls normally when no budget is given.
+    assert store.recall("hiking mountains")[0], "default recall should return memories"
+
+    picked, _ = store.recall("hiking mountains", token_budget=0)
+    assert picked == [], "explicit token_budget=0 must admit nothing, not the default"
+
+
+def test_recall_honors_explicit_zero_top_k(store):
+    # top_k=0 means "return no items". A post-append cap would still emit one item
+    # before breaking; the loop-top cap makes 0 honest. `top_k or default` would
+    # also have coerced 0 back to the default.
+    for i in range(5):
+        store.add_fact(f"hiking fact {i} mountains trails forests")
+    picked, _ = store.recall("hiking mountains", token_budget=100000, top_k=0)
+    assert picked == [], "explicit top_k=0 must return nothing"
+
+
 def test_forget_prunes_decayed_low_importance_episode(store):
     # Fresh, salient episode survives.
     store.add_episode("Important recent event", importance=0.9)

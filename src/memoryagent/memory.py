@@ -155,14 +155,23 @@ class MemoryStore:
         return sim * 0.65 + recency * 0.20 + item.get("importance", 0.4) * 0.15
 
     def recall(self, query: str, token_budget: int = None, top_k: int = None):
-        token_budget = token_budget or config.RECALL_TOKEN_BUDGET
-        top_k = top_k or config.RECALL_TOP_K
+        # `is None`, not `or`: an explicit budget/top_k of 0 is a legitimate probe of
+        # the recall boundary (the /recall endpoint exists to make the bound
+        # observable), so it must be honored — `x or default` would silently coerce
+        # 0 back to the full default and return a misleading non-empty result.
+        token_budget = config.RECALL_TOKEN_BUDGET if token_budget is None else token_budget
+        top_k = config.RECALL_TOP_K if top_k is None else top_k
         q_emb = qwen.embed(query)[0]
         q_norm = _norm(q_emb)  # hoisted out of the per-item loop (was recomputed N times)
         scored = [(self._salience(it, q_emb, q_norm), it) for it in (self.facts + self.episodic)]
         scored.sort(key=lambda x: x[0], reverse=True)
         picked, used, seen = [], 0, set()
         for _, it in scored:
+            # top_k check FIRST so top_k=0 honestly returns nothing (a post-append
+            # check would still emit one item before breaking). For any positive
+            # top_k this is behaviour-identical — the cap binds at the same count.
+            if len(picked) >= top_k:
+                break
             # Skip a memory whose text was already packed: facts+episodic are merged
             # and add_episode does not dedup, so identical text can appear twice.
             # Spending the bounded budget on a duplicate would starve a distinct
@@ -176,8 +185,6 @@ class MemoryStore:
             picked.append(it)
             used += cost
             seen.add(key)
-            if len(picked) >= top_k:
-                break
         return picked, self.prefs
 
     # ---- forgetting ----
