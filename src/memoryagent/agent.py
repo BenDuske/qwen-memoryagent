@@ -73,7 +73,15 @@ class MemoryAgent:
         prefs = data.get("prefs")
         if isinstance(prefs, dict):
             for k, v in prefs.items():
-                self._safe(self.mem.set_pref, k, v)
+                # Guard the pref VALUE, not just the {prefs:...} container. set_pref
+                # wraps v as {"value": v} and _build_system renders f"{k}={v['value']}"
+                # into EVERY future system prompt — so a non-string value from the
+                # untrusted extractor (a dict/list/number that parsed cleanly) would
+                # persist and bake a Python-repr'd blob (name={'first': 'Ben'}) into
+                # the prompt forever, degrading answers. Mirror the fact/episode guards
+                # above: only store a string value; skip anything else.
+                if isinstance(k, str) and isinstance(v, str):
+                    self._safe(self.mem.set_pref, k, v)
         episode = data.get("episode")
         if isinstance(episode, str):
             self._safe(self.mem.add_episode, episode)

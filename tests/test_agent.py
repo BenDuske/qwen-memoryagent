@@ -122,3 +122,29 @@ def test_learn_keeps_valid_items_from_a_mixed_list(monkeypatch, patched):
     assert any("keeps bees" in f["text"] for f in agent.mem.facts)
     assert len(agent.mem.facts) == 1                       # the dict was skipped
     assert agent.mem.prefs.get("tone", {}).get("value") == "curt"
+
+
+def test_learn_skips_nonstring_pref_values(monkeypatch, patched):
+    # The earlier guards checked the {prefs:...} CONTAINER is a dict, but not each
+    # pref VALUE. The extractor is untrusted LLM JSON, so a value can be a dict/list/
+    # number that parses cleanly. set_pref wraps it as {"value": v} and _build_system
+    # renders f"{k}={v['value']}" into EVERY future system prompt, so a non-string
+    # value would bake a Python-repr'd blob (name={'first': 'Ben'}) into the prompt
+    # forever. Only string values (like the fact/episode guards) may be stored; the
+    # good string pref in the same dict is still kept.
+    monkeypatch.setattr(
+        qwen, "chat",
+        lambda messages, model=None, temperature=0.4:
+        '{"prefs": {"name": {"first": "Ben"}, "tone": ["blunt", "direct"], '
+        '"count": 5, "address": "call me Ben"}}')
+    agent = MemoryAgent(MemoryStore(root=str(patched / "prefvals")))
+
+    reply = agent.chat("hello there")  # must not raise
+
+    assert reply is not None
+    # Only the string-valued pref survived; the dict/list/number ones were skipped.
+    assert agent.mem.prefs.get("address", {}).get("value") == "call me Ben"
+    assert set(agent.mem.prefs) == {"address"}
+    # And the rendered system prompt carries no Python-repr blob.
+    system = agent._build_system([], agent.mem.prefs)
+    assert "{'first'" not in system and "[" not in system.split("Known preferences:")[-1]
