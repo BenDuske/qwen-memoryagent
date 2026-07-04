@@ -1,8 +1,10 @@
 """MemoryStore: recall ranking, bounded token budget, forgetting, prefs, dedup."""
 import time
 
+import pytest
+
 from memoryagent import config
-from memoryagent.memory import MemoryStore, _approx_tokens
+from memoryagent.memory import MemoryStore, _approx_tokens, _clamp01
 
 
 def test_recall_ranks_relevant_fact_first(store):
@@ -137,6 +139,75 @@ def test_facts_dedupe_identical_text(store):
     store.add_fact("User is allergic to peanuts")
     store.add_fact("User is allergic to peanuts")
     assert len(store.facts) == 1
+
+
+def test_clamp01_bounds_and_defaults():
+    # In-range values (incl. explicit 0 — no falsy footgun) pass through unchanged.
+    assert _clamp01(0.5) == 0.5
+    assert _clamp01(0.0) == 0.0
+    assert _clamp01(1.0) == 1.0
+    # Out-of-range (foreign store / raw-percent caller) is bounded to [0, 1].
+    assert _clamp01(25) == 1.0
+    assert _clamp01(-3) == 0.0
+    # Missing / wrong type / bool / non-finite fall back to the supplied default.
+    assert _clamp01(None, 0.4) == 0.4
+    assert _clamp01("high", 0.4) == 0.4
+    assert _clamp01(True, 0.4) == 0.4          # bool is an int subclass, not a weight
+    assert _clamp01(float("nan"), 0.4) == 0.4
+    assert _clamp01(float("inf"), 0.4) == 0.4
+
+
+def test_forget_ignores_out_of_range_importance(store):
+    # Records loaded from a hand-edited / foreign / migrated store bypass
+    # add_episode's clamp, so forget() must bound importance at its own read
+    # boundary — it MULTIPLIES importance into the decayed-salience decision.
+    now = time.time()
+    # Fresh episode, importance=-3: unclamped -> recency*0.6 + (-3)*0.4 < 0, below the
+    # floor -> force-forgotten the moment it is written = silent data loss. Must survive.
+    store.episodic.append({"text": "fresh but importance=-3", "importance": -3,
+                           "ts": now, "emb": [1.0]})
+    # Ancient episode, importance=25: unclamped -> 0.6*recency + 25*0.4 ~= 10, never
+    # below the floor no matter how decayed -> un-prunable forever (defeats forgetting).
+    store.episodic.append({"text": "ancient but importance=25", "importance": 25,
+                           "ts": now - 400 * 86400, "emb": [1.0]})
+
+    dropped = store.forget()
+    texts = [e["text"] for e in store.episodic]
+    assert "fresh but importance=-3" in texts, "fresh episode wrongly force-forgotten"
+    # importance=25 clamps to 1.0 -> forget floor 1.0*0.4=0.4 > SALIENCE_FLOOR, so it is
+    # retained like any legitimate max-importance episode (bounded, not unbounded).
+    assert "ancient but importance=25" in texts
+    assert dropped == 0
+
+
+def test_salience_bounds_out_of_range_importance(store):
+    # _salience MULTIPLIES importance in: an unclamped 25 adds 25*0.15=3.75 and lets a
+    # junk item outrank a genuinely relevant hit; an unclamped -3 drives a real memory's
+    # score down (can sink it below the token budget). Identical text/emb/ts isolates
+    # importance as the only difference.
+    q = [1.0, 0.0]
+    junk = {"text": "junk", "importance": 25,  "ts": time.time(), "emb": [1.0, 0.0]}
+    neg  = {"text": "neg",  "importance": -3,  "ts": time.time(), "emb": [1.0, 0.0]}
+    ok   = {"text": "ok",   "importance": 1.0, "ts": time.time(), "emb": [1.0, 0.0]}
+    # 25 clamps to 1.0 -> ties the legitimate max-importance item (mutation catcher:
+    # unclamped, junk scores far higher and this equality fails).
+    # approx: each _salience call reads the clock a hair apart (recency differs in the
+    # last decimal); an unclamped 25 would score ~3.75 vs ~1.0 and blow past approx.
+    assert store._salience(junk, q) == pytest.approx(store._salience(ok, q), abs=1e-4)
+    # -3 clamps to 0.0 -> lowest but never negative, and strictly below the real item.
+    assert store._salience(neg, q) >= 0.0
+    assert store._salience(neg, q) < store._salience(ok, q)
+
+
+def test_add_persists_clamped_importance(store):
+    # add_fact / add_episode also clamp so the on-disk value is canonical.
+    store.add_fact("a durable fact", importance=25)
+    store.add_episode("an episode summary", importance=-3)
+    assert store.facts[-1]["importance"] == 1.0
+    assert store.episodic[-1]["importance"] == 0.0
+    reloaded = MemoryStore(root=store.root)
+    assert reloaded.facts[-1]["importance"] == 1.0
+    assert reloaded.episodic[-1]["importance"] == 0.0
 
 
 def test_persistence_across_store_instances(patched):

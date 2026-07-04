@@ -38,6 +38,22 @@ def _approx_tokens(text: str) -> int:
     return max(1, len(text) // 4)  # ~4 chars/token
 
 
+def _clamp01(v, default: float = 0.4) -> float:
+    # importance is a 0..1 weight that _salience and forget both MULTIPLY by, but it
+    # is never validated at any boundary. A value from a hand-edited / foreign / older
+    # writer store — or a caller passing a raw percent (25 for 0.25) — flows straight
+    # into salience ranking AND forget() and distorts both: a huge importance keeps an
+    # ancient episode un-prunable forever (defeats forgetting), a negative one force-
+    # forgets a brand-new episode (silent data loss); in recall a junk fact outranks a
+    # genuinely relevant hit or a real memory sinks below the budget. Bound it to [0,1]
+    # at every read/write boundary. NaN/Infinity slip past `isinstance number`, so
+    # require isfinite; bool is an int subclass, so exclude it. An in-range value
+    # (incl. an explicit 0 — no falsy footgun) is returned unchanged.
+    if not isinstance(v, (int, float)) or isinstance(v, bool) or not math.isfinite(v):
+        return default
+    return min(1.0, max(0.0, v))
+
+
 class MemoryStore:
     def __init__(self, root: str = None):
         self.root = root or config.MEMORY_DIR
@@ -154,7 +170,7 @@ class MemoryStore:
         text = text.strip()
         if not text or any(f["text"] == text for f in self.facts):
             return
-        self.facts.append({"text": text, "importance": importance,
+        self.facts.append({"text": text, "importance": _clamp01(importance, 0.6),
                            "ts": _now(), "emb": qwen.embed(text)[0]})
         self._save_jsonl("facts.jsonl", self.facts)
 
@@ -162,7 +178,7 @@ class MemoryStore:
         summary = summary.strip()
         if not summary:
             return
-        self.episodic.append({"text": summary, "importance": importance,
+        self.episodic.append({"text": summary, "importance": _clamp01(importance, 0.4),
                               "ts": _now(), "emb": qwen.embed(summary)[0]})
         self._save_jsonl("episodic.jsonl", self.episodic)
 
@@ -176,7 +192,7 @@ class MemoryStore:
         sim = _cosine(item["emb"], q_emb, q_norm)
         age_days = (_now() - item["ts"]) / 86400.0
         recency = 0.5 ** (age_days / config.DECAY_HALFLIFE_DAYS)
-        return sim * 0.65 + recency * 0.20 + item.get("importance", 0.4) * 0.15
+        return sim * 0.65 + recency * 0.20 + _clamp01(item.get("importance"), 0.4) * 0.15
 
     def recall(self, query: str, token_budget: int = None, top_k: int = None):
         # `is None`, not `or`: an explicit budget/top_k of 0 is a legitimate probe of
@@ -218,7 +234,7 @@ class MemoryStore:
         for it in self.episodic:
             age_days = (_now() - it["ts"]) / 86400.0
             recency = 0.5 ** (age_days / config.DECAY_HALFLIFE_DAYS)
-            sal = recency * 0.6 + it.get("importance", 0.4) * 0.4
+            sal = recency * 0.6 + _clamp01(it.get("importance"), 0.4) * 0.4
             if sal >= config.SALIENCE_FLOOR:
                 kept.append(it)
         dropped = len(self.episodic) - len(kept)
