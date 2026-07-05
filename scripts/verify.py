@@ -10,7 +10,7 @@ It runs three steps, no API key required (qwen.embed/qwen.chat are monkeypatched
 in the test suite, and eval.py uses deterministic keyless embeddings):
 
     1. install   — pip install -r requirements.txt
-    2. test      — pytest -q   (26 tests)
+    2. test      — pytest -q   (107 tests)
     3. eval      — python eval.py   (salience 8/8 vs naive 0/8)
 
 Exit code 0 only if all three pass, so it is safe to wire into CI.

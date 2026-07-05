@@ -117,7 +117,7 @@ memory engine without a key. The fake embedder is a stable hashing bag-of-words 
 similarity is **real math** — recall ranking is genuinely verifiable, not stubbed to a constant:
 
 ```python
-pytest    # 26 tests, ~1s, no Qwen key required
+pytest    # 107 tests, ~1s, no Qwen key required
 ```
 
 The suite proves the things the rubric actually cares about: cross-session persistence (write in

@@ -76,7 +76,7 @@ so cosine similarity is real and recall ranking is verifiable).
 
 ```
 pip install -e ".[dev]"   # or: pip install pytest
-pytest                    # 26 tests, ~1s, no key required (install ".[service]" to include the HTTP tests)
+pytest                    # 107 tests, ~1s, no key required (116 with the ".[service]" extra, which adds the HTTP-service tests)
 ```
 
 > **CI:** a ready GitHub Actions workflow is parked at [`docs/ci-workflow.yml.txt`](docs/ci-workflow.yml.txt).
