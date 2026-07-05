@@ -45,7 +45,16 @@ _AGENTS_LOCK = threading.Lock()
 
 
 def _user_root(user: str) -> str:
-    safe = _SAFE_USER.sub("_", user) or "default"
+    safe = _SAFE_USER.sub("_", user)
+    # `_SAFE_USER` neutralizes path separators but INTENTIONALLY allows dots (real
+    # ids like "a.b" are valid), so a name that is empty or ALL dots — "", ".", ".."
+    # — survives and then `os.path.join(MEMORY_DIR, safe)` resolves to the MEMORY_DIR
+    # root itself (".") or its PARENT (".."), escaping the per-user isolation root and,
+    # in a container, the mounted MEMORY_DIR volume (`user=".."` → writes land in /data,
+    # not /data/memory). `body.user` is free-form client input on /chat, so collapse any
+    # such name to the shared default bucket. Any id with ≥1 non-dot char is unchanged.
+    if not safe.strip("."):
+        safe = "default"
     return os.path.join(config.MEMORY_DIR, safe)
 
 
