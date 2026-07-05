@@ -46,6 +46,10 @@ python -m uvicorn memoryagent.app:app --host 0.0.0.0 --port 8000 &
 sleep 3
 curl -s localhost:8000/healthz    # health endpoint is /healthz — returns {"ok":true,...}
 ```
+Tip: for an even stronger visual, open **`http://<instance-public-ip>:8000/docs`** in a browser — the
+FastAPI Swagger UI renders the live endpoint list, which reads more clearly as "a running app" than a
+one-line JSON response. (Requires the instance security group to allow inbound TCP 8000.) The `/healthz`
+curl alone is fully sufficient proof; `/docs` is optional polish.
 
 ## 4. Take the screenshot ✅
 Capture the **Workbench** with, clearly visible in one frame:
