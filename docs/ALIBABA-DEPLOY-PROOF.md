@@ -22,7 +22,10 @@ running on the instance. This is the fastest, cheapest path.
 sudo apt update && sudo apt install -y python3-pip git
 git clone https://github.com/BenDuske/qwen-memoryagent
 cd qwen-memoryagent
-pip install -e .        # if that errors: pip install -r requirements.txt  (then prefix runs with: PYTHONPATH=src )
+pip install -e .          # Option A (demo.py) — core is stdlib-only, this is all it needs
+# For Option B (the HTTP service) you ALSO need fastapi+uvicorn, which live in an extra:
+#   pip install -e '.[service]'
+# (if -e errors on this box: pip install '.[service]'  then prefix runs with  PYTHONPATH=src )
 
 # Qwen Cloud credentials (paste your real DashScope key):
 export QWEN_API_KEY=sk-YOUR_REAL_DASHSCOPE_KEY
@@ -38,9 +41,10 @@ python demo.py
 
 **Option B — the live HTTP service, then hit it from the same box:**
 ```bash
+pip install -e '.[service]'   # installs fastapi + uvicorn (skip if you already did it above)
 python -m uvicorn memoryagent.app:app --host 0.0.0.0 --port 8000 &
 sleep 3
-curl -s localhost:8000/health || curl -s localhost:8000/
+curl -s localhost:8000/healthz    # health endpoint is /healthz — returns {"ok":true,...}
 ```
 
 ## 4. Take the screenshot ✅
