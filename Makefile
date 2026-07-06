@@ -10,10 +10,10 @@ help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-install: ## Install runtime deps (keyless path)
-	$(PY) -m pip install -r requirements.txt
+install: ## Install package + keyless test deps (pytest, httpx) — runtime itself is stdlib-only
+	$(PY) -m pip install -e ".[dev]"
 
-test: ## Run the keyless test suite (26 tests)
+test: ## Run the keyless test suite (95 tests; the 2 HTTP-service files skip)
 	$(PY) -m pytest -q
 
 eval: ## Quantify the memory engine (salience 8/8 vs naive 0/8)

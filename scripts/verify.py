@@ -9,7 +9,9 @@ keyless check that `make verify` runs on Linux/macOS:
 It runs three steps, no API key required (qwen.embed/qwen.chat are monkeypatched
 in the test suite, and eval.py uses deterministic keyless embeddings):
 
-    1. install   — pip install -r requirements.txt
+    1. install   — pip install -e ".[dev]"   (package + pytest, keyless; runtime
+                   itself is stdlib-only per requirements.txt — the dev extra just
+                   adds the test runner)
     2. test      — pytest -q   (95 keyless tests; the 2 HTTP-service files skip)
     3. eval      — python eval.py   (salience 8/8 vs naive 0/8)
 
@@ -35,7 +37,7 @@ def main():
     skip_install = "--skip-install" in sys.argv[1:]
 
     if not skip_install:
-        run("install", ["-m", "pip", "install", "-r", "requirements.txt"])
+        run("install", ["-m", "pip", "install", "-e", ".[dev]"])
     else:
         print("=== install: skipped (--skip-install) ===")
 
