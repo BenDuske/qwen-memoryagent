@@ -1,0 +1,36 @@
+# Keep secrets, local state, and build cruft OUT of the Docker image.
+# CRITICAL: the Dockerfile's `COPY . /app` reads from the BUILD CONTEXT (filesystem),
+# NOT git — so .gitignore does NOT protect these. Without this file, a local .env would
+# bake the live QWEN_API_KEY into an image layer (leaks on any registry push / image pull).
+
+# --- Secrets / local env (NEVER ship in an image) ---
+.env
+.env.*
+!.env.example
+
+# --- Version control (1.4M of history, not needed at runtime) ---
+.git
+.gitignore
+.dockerignore
+
+# --- Local memory stores / scratch data (runtime writes to the /data volume) ---
+.memory/
+**/.memory/
+.demo-mem/
+**/.demo-mem/
+.fgtest/
+
+# --- Python build / cache / test artifacts ---
+__pycache__/
+**/__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+**/*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# --- Test suite: the service image installs only .[service] (no pytest), so tests can't run in-image ---
+tests/
