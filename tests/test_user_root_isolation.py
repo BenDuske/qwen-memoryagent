@@ -22,7 +22,9 @@ import os
 
 import pytest
 
-from memoryagent import app, config
+pytest.importorskip("fastapi", reason="install the 'service' extra to run app tests")
+
+from memoryagent import app, config  # noqa: E402
 
 
 # --- 1. ENV BINDING: MEMORY_DIR comes from the environment --------------------

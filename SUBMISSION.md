@@ -70,7 +70,7 @@ store) — mount it on a persistent volume. Full steps in [`DEPLOY.md`](DEPLOY.m
 ## Run it yourself
 
 ```bash
-# keyless reproduce in one command (install + 107 tests + evaluation, no API key)
+# keyless reproduce in one command (install + 95 tests + evaluation, no API key)
 make verify
 
 # …no make? (e.g. Windows judges) same keyless check, cross-platform:
@@ -78,7 +78,7 @@ python scripts/verify.py
 
 # …or the same steps by hand:
 pip install -r requirements.txt
-python -m pytest -q          # 107 tests (116 with the ".[service]" extra)
+python -m pytest -q          # 95 tests (116 with the ".[service]" extra)
 python eval.py               # salience 8/8 vs naive 0/8
 
 # live: add a Qwen Cloud (DashScope) key, prove cross-session recall

@@ -13,7 +13,7 @@ authors = [{ name = "Ben Duske" }]
 dependencies = []  # stdlib-only runtime
 
 [project.optional-dependencies]
-dev = ["pytest>=7"]
+dev = ["pytest>=7", "httpx"]  # httpx: Starlette's TestClient (HTTP-service tests) requires it
 service = ["fastapi", "uvicorn"]
 
 [project.scripts]
