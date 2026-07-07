@@ -17,6 +17,7 @@ Run locally:
 import os
 import re
 import threading
+from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -111,7 +112,7 @@ def stats(user: str):
 
 
 @app.get("/memory/{user}/recall", response_model=RecallOut)
-def recall(user: str, q: str, budget: int | None = None, top_k: int | None = None):
+def recall(user: str, q: str, budget: Optional[int] = None, top_k: Optional[int] = None):
     """Inspect bounded recall directly — what *would* be injected for a query,
     and at what token cost. This is the Track-1 'recall within a limited context
     window' guarantee, made observable."""
