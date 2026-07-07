@@ -94,7 +94,7 @@ uvicorn memoryagent.app:app --port 8000
 
 - [x] Working agent — CLI + FastAPI service (`src/memoryagent/`)
 - [x] Built on Qwen Cloud (DashScope OpenAI-compatible; `qwen3.7-plus`, `text-embedding-v4`)
-- [x] Keyless test suite — 116 tests (107 core + 9 HTTP), CI on Python 3.9–3.12 (parked as `docs/ci-workflow.yml.txt`; copy to `.github/workflows/ci.yml` to enable)
+- [x] Test suite — 95 keyless core + 21 HTTP-service = 116 total (the 2 HTTP-service files skip without the `.[service]` extra), CI on Python 3.9–3.12 (parked as `docs/ci-workflow.yml.txt`; copy to `.github/workflows/ci.yml` to enable)
 - [x] Evaluation quantifying the memory engine (`eval.py` — 8/8 vs 0/8)
 - [x] Architecture diagram (`docs/architecture.svg`)
 - [x] Demo script for the <3-min video (`docs/demo-script.md`)
