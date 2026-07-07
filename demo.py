@@ -13,8 +13,21 @@ import shutil
 import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
+from memoryagent import config
 from memoryagent.agent import MemoryAgent
 from memoryagent.memory import MemoryStore
+
+# This demo makes LIVE Qwen Cloud chat calls. Without a key the very first turn
+# blocks on the network until urllib's 120s timeout, then dies with a raw
+# RuntimeError — fail fast with a clear instruction instead, and point at the
+# fully keyless recall proof (eval.py) for anyone who just wants to see the point.
+if not config.QWEN_API_KEY:
+    sys.exit(
+        "demo.py needs a Qwen Cloud API key — it makes live chat calls.\n"
+        "  export QWEN_API_KEY=sk-...      # or DASHSCOPE_API_KEY\n"
+        "  python demo.py\n"
+        "No key? See the memory engine work with zero network:  python eval.py"
+    )
 
 root = tempfile.mkdtemp(prefix="memoryagent-demo-")
 try:
