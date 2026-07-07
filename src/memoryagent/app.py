@@ -116,7 +116,10 @@ def recall(user: str, q: str, budget: Optional[int] = None, top_k: Optional[int]
     """Inspect bounded recall directly — what *would* be injected for a query,
     and at what token cost. This is the Track-1 'recall within a limited context
     window' guarantee, made observable."""
-    picked, prefs = _agent_for(user).mem.recall(q, token_budget=budget, top_k=top_k)
+    try:
+        picked, prefs = _agent_for(user).mem.recall(q, token_budget=budget, top_k=top_k)
+    except Exception as e:  # embedding the query hits Qwen Cloud — surface as 502, not a bare 500
+        raise HTTPException(status_code=502, detail=str(e))
     slim = [{"text": p["text"], "ts": p["ts"], "importance": p.get("importance")}
             for p in picked]
     return RecallOut(recalled=slim, prefs=prefs)

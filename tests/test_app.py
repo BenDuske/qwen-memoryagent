@@ -143,3 +143,18 @@ def test_chat_engine_error_surfaces_as_502(client, monkeypatch):
     r = client.post("/chat", json={"user": "ben", "text": "hello"})
     assert r.status_code == 502
     assert "qwen cloud unreachable" in r.json()["detail"]
+
+
+def test_recall_engine_error_surfaces_as_502(client, monkeypatch):
+    # /recall embeds the query via Qwen Cloud, so an upstream failure (e.g. a
+    # missing/expired key) must degrade to a 502 with detail — the same graceful
+    # surface /chat gives — not a bare 500. Pins the recall `except` guard.
+    agent = app_module._agent_for("ben")
+
+    def boom(q, token_budget=None, top_k=None):
+        raise RuntimeError("qwen cloud unreachable")
+
+    monkeypatch.setattr(agent.mem, "recall", boom)
+    r = client.get("/memory/ben/recall", params={"q": "snack allergy"})
+    assert r.status_code == 502
+    assert "qwen cloud unreachable" in r.json()["detail"]
