@@ -12,6 +12,7 @@ NOT part of the test suite (makes real Qwen Cloud calls); kept as a repro script
 """
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -70,48 +71,54 @@ def main():
     memory_dir = tempfile.mkdtemp(prefix="memoryagent-http-")
     user = "ben"
 
-    # ---- PROCESS #1: teach -------------------------------------------------
-    p1 = start_server(memory_dir)
     try:
-        hz = wait_healthz()
-        log.append(("note", "PROCESS #1 healthz", hz))
-        teach = [
-            "Hi, I'm Ben. Always call me Ben, never 'Commander'.",
-            "I run a company called Northwind Labs — a privacy-first robotics startup.",
-            "I like concise, direct answers with no fluff.",
-        ]
-        for t in teach:
-            out = _req("POST", "/chat", {"user": user, "text": t})
-            log.append(("turn", t, out["reply"]))
-        log.append(("note", "stats after teaching", _req("GET", f"/memory/{user}/stats")))
-    finally:
-        stop_server(p1)
-    log.append(("event", "SERVICE RESTART", "process #1 stopped; process #2 starting on same MEMORY_DIR"))
+        # ---- PROCESS #1: teach ---------------------------------------------
+        p1 = start_server(memory_dir)
+        try:
+            hz = wait_healthz()
+            log.append(("note", "PROCESS #1 healthz", hz))
+            teach = [
+                "Hi, I'm Ben. Always call me Ben, never 'Commander'.",
+                "I run a company called Northwind Labs — a privacy-first robotics startup.",
+                "I like concise, direct answers with no fluff.",
+            ]
+            for t in teach:
+                out = _req("POST", "/chat", {"user": user, "text": t})
+                log.append(("turn", t, out["reply"]))
+            log.append(("note", "stats after teaching", _req("GET", f"/memory/{user}/stats")))
+        finally:
+            stop_server(p1)
+        log.append(("event", "SERVICE RESTART", "process #1 stopped; process #2 starting on same MEMORY_DIR"))
 
-    # ---- PROCESS #2: recall over the same store ----------------------------
-    p2 = start_server(memory_dir)
-    try:
-        hz2 = wait_healthz()
-        log.append(("note", "PROCESS #2 healthz (fresh process)", hz2))
-        ask = [
-            "What's my company, and what's it about?",
-            "What should you call me?",
-        ]
-        for q in ask:
-            out = _req("POST", "/chat", {"user": user, "text": q})
-            log.append(("turn", q, out["reply"]))
-        # observable bounded recall
-        rec = _req("GET", f"/memory/{user}/recall?q=company%20name&budget=400")
-        log.append(("note", "bounded recall (q='company name', budget=400 tokens)", rec))
-        # forget() = decayed-salience pruning (GC). On fresh data nothing is stale
-        # yet, so dropped=0 is the expected, honest result.
-        forg = _req("POST", f"/memory/{user}/forget")
-        log.append(("note", "forget() — salience-based pruning (decay GC); 0 dropped on fresh data is expected", forg))
-    finally:
-        stop_server(p2)
+        # ---- PROCESS #2: recall over the same store ------------------------
+        p2 = start_server(memory_dir)
+        try:
+            hz2 = wait_healthz()
+            log.append(("note", "PROCESS #2 healthz (fresh process)", hz2))
+            ask = [
+                "What's my company, and what's it about?",
+                "What should you call me?",
+            ]
+            for q in ask:
+                out = _req("POST", "/chat", {"user": user, "text": q})
+                log.append(("turn", q, out["reply"]))
+            # observable bounded recall
+            rec = _req("GET", f"/memory/{user}/recall?q=company%20name&budget=400")
+            log.append(("note", "bounded recall (q='company name', budget=400 tokens)", rec))
+            # forget() = decayed-salience pruning (GC). On fresh data nothing is stale
+            # yet, so dropped=0 is the expected, honest result.
+            forg = _req("POST", f"/memory/{user}/forget")
+            log.append(("note", "forget() — salience-based pruning (decay GC); 0 dropped on fresh data is expected", forg))
+        finally:
+            stop_server(p2)
 
-    write_transcript(memory_dir)
-    print("OK — transcript written to", OUT)
+        write_transcript(memory_dir)
+        print("OK — transcript written to", OUT)
+    finally:
+        # Every run (success or failure) must clean up its temp MEMORY_DIR —
+        # the transcript is written to OUT, not read back from here. Mirrors
+        # scripts/live_full_demo.py's store_dir cleanup.
+        shutil.rmtree(memory_dir, ignore_errors=True)
 
 
 def write_transcript(memory_dir):
