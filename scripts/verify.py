@@ -12,7 +12,7 @@ in the test suite, and eval.py uses deterministic keyless embeddings):
     1. install   — pip install -e ".[dev]"   (package + pytest, keyless; runtime
                    itself is stdlib-only per requirements.txt — the dev extra just
                    adds the test runner)
-    2. test      — pytest -q   (95 keyless tests; the 2 HTTP-service files skip)
+    2. test      — pytest -q   (102 keyless tests; the 2 HTTP-service files skip)
     3. eval      — python eval.py   (salience 8/8 vs naive 0/8)
 
 Exit code 0 only if all three pass, so it is safe to wire into CI.

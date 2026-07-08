@@ -70,15 +70,15 @@ store) — mount it on a persistent volume. Full steps in [`DEPLOY.md`](DEPLOY.m
 ## Run it yourself
 
 ```bash
-# keyless reproduce in one command (install + 95 tests + evaluation, no API key)
+# keyless reproduce in one command (install + 102 tests + evaluation, no API key)
 make verify
 
 # …no make? (e.g. Windows judges) same keyless check, cross-platform:
 python scripts/verify.py
 
 # …or the same steps by hand:
-pip install -r requirements.txt
-python -m pytest -q          # 95 tests (116 with the ".[service]" extra)
+pip install -e ".[dev]"      # package + pytest (runtime itself is stdlib-only per requirements.txt)
+python -m pytest -q          # 102 tests (124 with the ".[service]" extra)
 python eval.py               # salience 8/8 vs naive 0/8
 
 # live: add a Qwen Cloud (DashScope) key, prove cross-session recall
@@ -94,7 +94,7 @@ uvicorn memoryagent.app:app --port 8000
 
 - [x] Working agent — CLI + FastAPI service (`src/memoryagent/`)
 - [x] Built on Qwen Cloud (DashScope OpenAI-compatible; `qwen3.7-plus`, `text-embedding-v4`)
-- [x] Test suite — 95 keyless core + 21 HTTP-service = 116 total (the 2 HTTP-service files skip without the `.[service]` extra), CI on Python 3.9–3.12 (parked as `docs/ci-workflow.yml.txt`; copy to `.github/workflows/ci.yml` to enable)
+- [x] Test suite — 102 keyless core + 22 HTTP-service = 124 total (the 2 HTTP-service files skip without the `.[service]` extra), CI on Python 3.9–3.12 (parked as `docs/ci-workflow.yml.txt`; copy to `.github/workflows/ci.yml` to enable)
 - [x] Evaluation quantifying the memory engine (`eval.py` — 8/8 vs 0/8)
 - [x] Architecture diagram (`docs/architecture.svg`)
 - [x] Demo script for the <3-min video (`docs/demo-script.md`)

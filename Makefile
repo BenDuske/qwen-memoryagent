@@ -13,7 +13,7 @@ help: ## Show this help
 install: ## Install package + keyless test deps (pytest, httpx) — runtime itself is stdlib-only
 	$(PY) -m pip install -e ".[dev]"
 
-test: ## Run the keyless test suite (95 tests; the 2 HTTP-service files skip)
+test: ## Run the keyless test suite (102 tests; the 2 HTTP-service files skip)
 	$(PY) -m pytest -q
 
 eval: ## Quantify the memory engine (salience 8/8 vs naive 0/8)
