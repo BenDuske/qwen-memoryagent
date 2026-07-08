@@ -103,7 +103,11 @@ class MemoryStore:
         out = []
         p = self._p(name)
         if os.path.exists(p):
-            with open(p, encoding="utf-8") as f:
+            # errors="replace": invalid UTF-8 bytes (partial write, disk fault,
+            # external tampering) must degrade to a skippable bad line, not raise
+            # UnicodeDecodeError during iteration and crash __init__ — the JSON
+            # guard below only covers parse errors, not the decode layer.
+            with open(p, encoding="utf-8", errors="replace") as f:
                 for line in f:
                     line = line.strip()
                     if not line:

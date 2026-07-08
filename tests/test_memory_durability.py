@@ -35,6 +35,33 @@ def test_torn_jsonl_line_does_not_nuke_the_store(patched):
     assert texts == {"User is allergic to peanuts", "User lives in Lubbock, TX"}
 
 
+def test_invalid_utf8_bytes_do_not_nuke_the_store(patched):
+    """Byte-level corruption (partial write, disk fault, external tampering) can
+    leave INVALID UTF-8 in a jsonl file. The decode happens during line iteration —
+    OUTSIDE the json-parse guard — so an unguarded open() raised UnicodeDecodeError
+    in __init__ and made the whole agent unstartable (violating the same "a corrupt
+    store must not nuke everything" contract the torn-line guard protects). Found by
+    the adversarial fuzz sweep; errors="replace" degrades the bad bytes to a
+    skippable line instead of crashing startup."""
+    root = str(patched / "badutf8")
+    s = MemoryStore(root=root)
+    s.add_fact("User is allergic to peanuts")
+    s.add_fact("User lives in Lubbock, TX")
+
+    # Append raw invalid UTF-8 as a torn trailing record: 0xff / 0xfe / a lone 0x80
+    # continuation byte are never valid UTF-8. Pre-fix, this crashed the reload.
+    with open(s._p("facts.jsonl"), "ab") as f:
+        f.write(b"\n\xff\xfe{\x80 not valid utf-8 ")
+
+    reloaded = MemoryStore(root=root)                     # must not raise
+    texts = {fct["text"] for fct in reloaded.facts}
+    # Both valid facts survive; the undecodable record is dropped, not fatal.
+    assert texts == {"User is allergic to peanuts", "User lives in Lubbock, TX"}
+    # And recall still runs clean on the hot path.
+    picked, _prefs = reloaded.recall("peanuts")
+    assert any(p["text"] == "User is allergic to peanuts" for p in picked)
+
+
 def test_corrupt_prefs_degrades_to_empty(patched):
     root = str(patched / "badprefs")
     s = MemoryStore(root=root)
