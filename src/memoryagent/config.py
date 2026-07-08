@@ -33,6 +33,26 @@ def _load_env_files() -> None:
 
 _load_env_files()
 
+
+def _num_env(key: str, default, cast):
+    """Parse a numeric env var, degrading to `default` on empty/whitespace/invalid.
+
+    os.environ.get(key, fallback) only returns the fallback when the key is ABSENT, so a
+    present-but-empty value (e.g. a `.env` line `RECALL_TOP_K=`) would reach int()/float()
+    as "" and raise at IMPORT time — bricking the whole package (demo, CLI, HTTP service,
+    Docker container) before any code runs. Any tuning knob that can't be parsed falls back
+    to its documented default instead, so a misconfigured env can't take the app down.
+    """
+    raw = os.environ.get(key)
+    raw = raw.strip() if isinstance(raw, str) else ""
+    if not raw:
+        return default
+    try:
+        return cast(raw)
+    except (ValueError, TypeError):
+        return default
+
+
 QWEN_BASE_URL = os.environ.get("QWEN_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1")
 QWEN_API_KEY  = os.environ.get("QWEN_API_KEY") or os.environ.get("DASHSCOPE_API_KEY", "")
 CHAT_MODEL    = os.environ.get("QWEN_CHAT_MODEL", "qwen3.7-plus")
@@ -41,11 +61,11 @@ EMBED_MODEL   = os.environ.get("QWEN_EMBED_MODEL", "text-embedding-v4")
 MEMORY_DIR    = os.environ.get("MEMORY_DIR", os.path.expanduser("~/.aegis-memoryagent"))
 
 # Recall is bounded: pack the highest-salience memories until the token budget is hit.
-RECALL_TOKEN_BUDGET = int(os.environ.get("RECALL_TOKEN_BUDGET", "1200"))
-RECALL_TOP_K        = int(os.environ.get("RECALL_TOP_K", "8"))
+RECALL_TOKEN_BUDGET = _num_env("RECALL_TOKEN_BUDGET", 1200, int)
+RECALL_TOP_K        = _num_env("RECALL_TOP_K", 8, int)
 # Forgetting: episodic memories decay; below the floor they're pruned.
-DECAY_HALFLIFE_DAYS = float(os.environ.get("DECAY_HALFLIFE_DAYS", "14"))
-SALIENCE_FLOOR      = float(os.environ.get("SALIENCE_FLOOR", "0.12"))
+DECAY_HALFLIFE_DAYS = _num_env("DECAY_HALFLIFE_DAYS", 14.0, float)
+SALIENCE_FLOOR      = _num_env("SALIENCE_FLOOR", 0.12, float)
 
 PERSONA = os.environ.get(
     "PERSONA",
