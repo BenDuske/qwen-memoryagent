@@ -50,5 +50,16 @@ try:
     ]:
         print("you>  ", q)
         print("aegis>", a2.chat(q), "\n")
+except RuntimeError as e:
+    # A live Qwen Cloud call was REJECTED (e.g. an incorrect or expired key —
+    # DashScope keys expire). The missing-key guard above can't catch this: the
+    # key is present, it just fails at the network. Same intent as that guard —
+    # fail with a clear instruction instead of dumping a raw traceback.
+    sys.exit(
+        f"demo.py could not reach Qwen Cloud: {e}\n"
+        "Check the key is current (DashScope keys expire) and export a valid one:\n"
+        "  export QWEN_API_KEY=sk-...      # or DASHSCOPE_API_KEY\n"
+        "No key? See the memory engine work with zero network:  python eval.py"
+    )
 finally:
     shutil.rmtree(root, ignore_errors=True)
