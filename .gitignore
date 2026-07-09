@@ -18,3 +18,7 @@ htmlcov/
 
 # Internal production doc — recording runbook (desktop-hands workflow, cloned-voice mechanics)
 docs/demo-runbook.md
+
+# Scratch memory stores from demo runs (never commit)
+.demo-mem-b34/
+.enc-test/
