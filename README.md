@@ -37,6 +37,8 @@ Qwen → **extract** new facts/prefs/episodes → **forget** low-salience, stale
 
 ## Architecture
 
+![Aegis MemoryAgent architecture — three-layer store, salience-budget recall, Qwen Cloud chat + embeddings](docs/architecture.png)
+
 ```
 user ──▶ MemoryAgent
             │  1. recall(query, budget)  ── semantic + recency over episodic/facts (+ all prefs)
@@ -149,7 +151,8 @@ tests/          pytest suite — runs without a key (fakes the network calls)
 pyproject.toml  packaging + pytest config
 Dockerfile      Alibaba Cloud deployable
 DEPLOY.md       Alibaba Cloud deployment proof
-docs/architecture.svg   system diagram (for the submission)
+docs/architecture.png   system diagram (for the submission — rendered)
+docs/architecture.svg   system diagram source (vector)
 ```
 
 ## Hackathon checklist
@@ -157,7 +160,7 @@ docs/architecture.svg   system diagram (for the submission)
 - [x] Open-source repo + license (MIT)
 - [x] Tests for recall / forget / bounded budget (run keyless via monkeypatch)
 - [x] Proof of Alibaba Cloud deployment (`DEPLOY.md` + Dockerfile + FastAPI `app.py`)
-- [x] Architecture diagram (`docs/architecture.svg`)
+- [x] Architecture diagram (`docs/architecture.png` + `docs/architecture.svg`)
 - [ ] < 3-min demo video (script in `docs/demo-script.md`)
 - [x] (bonus) build-journey blog post draft (`docs/blog-build-journey.md`)
 
